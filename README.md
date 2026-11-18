@@ -144,7 +144,11 @@ Core workflow:
    - **Sane task graph:** unknown staff, duplicates, unknown dependencies, endless sub-task chains and daily step caps are refused, each with a reason the agent can read.
 4. `board_report`: done, in progress, decisions waiting for the owner, outreach drafts with proof, and what the rails blocked.
 
-A live **dashboard** shows the building floor by floor, the task board, the owner's approval queue, the rails feed and verified outreach.
+**Inside the building** (`/`): a 3D night view of the company's tower. Every floor is a department and glows amber while an agent works. Click a floor for its team, their work and a form to give them more. The lobby holds ventures, the owner's approvals, verified outreach and the rails feed; the terrace is JARVIS.
+
+**Landing page** (`/landing/`): what Corporate AI is, with today's real results.
+
+![The lobby: a ₹1,450 sample request waits for the owner](app/public/landing/lobby.jpg)
 
 ### The hardest part: verifying contacts on the real web
 Checking "is this email on that page" sounds like a `string.includes`. Live pages made it hard:
@@ -164,12 +168,12 @@ npm test                                 # 13 tests, including an end-to-end MCP
 node demo/run.js                         # whole company, offline script (1 second)
 node demo/run.js --live                  # real Claude staff with web search
 node demo/before-after.js                # plain agent's contacts vs the verifier (live)
-CORP_BRAIN=scripted node src/server.js   # dashboard on http://127.0.0.1:4700 (drop CORP_BRAIN for live Claude)
+CORP_BRAIN=scripted node src/server.js   # building on http://127.0.0.1:4700, landing page at /landing/ (drop CORP_BRAIN for live Claude)
 ```
 **JARVIS as CEO:** open Claude Code in this repo. `.mcp.json` registers the `corporate-ai` MCP server. Then say: *"You're the CEO of Corporate AI. Start a venture for a monthly Assam tea box for offices in Gurugram, plan it, run steps until the queue is empty, and give me the board report."*
 
 ### Demo
-1. Dashboard: start the tea-box venture → the chief of staff plans 5 tasks with dependencies.
+1. Landing page (`/landing/`), then **Open the building**. In the lobby, start the tea-box venture → the chief of staff plans 5 tasks with dependencies.
 2. Autopilot: staff work through the queue; the rails feed fills up (a duplicate task, a made-up email, a message promising an advance payment, a supplier page with hidden instructions).
 3. The owner approves the ₹1,450 tasting sample; JARVIS couldn't have.
 4. Open an outreach draft: the evidence snippet from the supplier's own page.
