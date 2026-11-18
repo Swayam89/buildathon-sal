@@ -492,7 +492,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     box(M.lamp, 0.1, 0.25, 0.4, 2.12, 0.95, 0.6, car); box(M.lamp, 0.1, 0.25, 0.4, 2.12, 0.95, -0.6, car)
     box(new THREE.MeshBasicMaterial({ color: '#ff4b3a' }), 0.1, 0.2, 0.4, -2.12, 0.95, 0.6, car); box(new THREE.MeshBasicMaterial({ color: '#ff4b3a' }), 0.1, 0.2, 0.4, -2.12, 0.95, -0.6, car)
     const lane = k % 4, alongX = lane < 2
-    car.userData = { alongX, lane, speed: 9 + (k % 3) * 3, off: k * 97 }
+    Object.assign(car.userData, { alongX, lane, speed: 9 + (k % 3) * 3, off: k * 97 })
     if (!alongX) car.rotation.y = Math.PI / 2
     scene.add(car); cars.push(car)
   }
