@@ -13,6 +13,11 @@ About 4 minutes. Rehearsed on 18 Nov 2026 at 5:36 PM; times below are from that 
   ```
   `CORP_BRAIN=scripted` is the offline demo brain: same result every time, no Claude calls, a short pause per step so you can see the floors work. Drop it to run real Claude staff (steps then take a minute or more each).
 - Have a second tab ready on `http://127.0.0.1:4700/landing/`.
+- **Live mode (Gemini):** with `GEMINI_API_KEY` in `app/.env`, start a second server on another port with real agents:
+  ```bash
+  cd app && PORT=4701 CORP_DATA=/tmp/corp-ai-live/company.json node src/server.js
+  ```
+  On the Terrace, *Talk to your CEO*: "Start a monthly Assam tea box for office teams in Gurugram and tell me the plan in 3 lines." It answers in about 30 s using `gemini-3.5-flash-lite` (the free tier's fastest model; it falls back to others if Google is busy). The free key has no Google Search, so staff answer without browsing, and any contact they suggest still has to pass the page check.
 
 ## The run (who says what)
 
