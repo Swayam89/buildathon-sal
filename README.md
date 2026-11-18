@@ -160,6 +160,9 @@ Checking "is this email on that page" sounds like a `string.includes`. Live page
 
 **Live result** (`node demo/before-after.js`): a Claude agent with web search was asked for 5 wholesale tea suppliers. 4 contacts were verified with evidence from the page; 1 page couldn't be read, so it was blocked. Asked with no web access, Claude refused to guess, which is exactly the behaviour the rails enforce for every agent and every model.
 
+### Assets
+The staff are the **RobotExpressive** model by Tomás Laulhé (Quaternius), CC0 1.0, loaded from the three.js examples. Everything else in the 3D scene is built in code in `app/public/building3d.js`.
+
 ### How to run it
 Needs Node.js 22+. No dependencies. Live mode needs the `claude` CLI signed in.
 ```bash
