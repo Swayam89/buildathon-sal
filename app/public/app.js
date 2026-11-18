@@ -47,6 +47,8 @@ function md(src) {
   }
   return `<div class="md">${out.join('')}</div>`
 }
+// Replace an element's HTML only when it changed, so a click is never lost to a redraw.
+const setHTML = (el, html) => { if (el && el.__html !== html) { el.innerHTML = html; el.__html = html } }
 const modal = (html) => { $('#modal-body').innerHTML = html; $('#modal').showModal() }
 const floorOf = (id) => S?.floors.find(f => f.id === id)
 const deptOf = () => Object.fromEntries((S?.floors || []).flatMap(f => f.people.map(p => [p.id, f.id])))
@@ -56,7 +58,7 @@ const tasksOn = (id) => { const d = deptOf(); return (S?.tasks || []).filter(t =
 function renderLevels() {
   const rail = $('#rail')
   rail.classList.toggle('compact', !!inside)
-  $('#levels').innerHTML = [...LEVELS].reverse().map(id => {
+  setHTML($('#levels'), [...LEVELS].reverse().map(id => {
     const ts = tasksOn(id)
     const busy = ts.some(t => t.status === 'doing')
     const sub = id === 'terrace' ? 'JARVIS, your AI and the CEO'
@@ -65,7 +67,7 @@ function renderLevels() {
     const current = inside ? inside === id : focusId === id
     return `<li><button class="level ${busy ? 'busy' : ''} ${id === 'terrace' ? 'top' : ''}" data-level="${id}" aria-current="${current}" title="${esc(NAME[id] || floorOf(id)?.name || id)}">
       <span class="n">${num(id)}</span><span><span class="name">${esc(NAME[id] || floorOf(id)?.name || id)}</span><span class="sub">${esc(sub)}</span></span><span class="dot"></span></button></li>`
-  }).join('')
+  }).join(''))
 }
 
 // ---------- Panels ----------
@@ -78,6 +80,7 @@ function show(id) {
   if (!id && location.hash) history.replaceState(null, '', location.pathname)
   tab = 'progress'; priority = 'normal'
   $('#panel').scrollTop = 0
+  for (const el of ['#p-live', '#p-after']) { const e = $(el); if (e) { e.innerHTML = ''; e.__html = '' } }
   renderForm(); render()
 }
 
@@ -85,6 +88,7 @@ function renderForm() {
   const box = $('#p-form'); box.innerHTML = ''
   if (!inside || inside === 'terrace') return
   if (inside === 'lobby') {
+    box.style.order = S?.ventures.length ? '' : '-1'
     box.innerHTML = `<h2>Start a venture <small>JARVIS plans it</small></h2>
       <form class="formcard" id="f-venture">
         <label>Business idea<input name="idea" required placeholder="Monthly Assam tea box for office teams in Gurugram"></label>
@@ -112,7 +116,7 @@ function renderLive() {
   const box = $('#p-live'); if (!box || !inside || !S) return
   if (inside === 'terrace') {
     const o = S.overview
-    box.innerHTML = `<p class="kicker">The terrace</p><h1>JARVIS</h1>
+    setHTML(box, `<p class="kicker">The terrace</p><h1>JARVIS</h1>
       <p class="lede">Your AI, and the CEO of Corporate AI. JARVIS plans each venture, hands work to the floors, runs the staff and reads you the board report. It works through MCP tools, and it can't approve money: only you can.</p>
       <div class="chips"><span class="chip">${o.staff} staff</span><span class="chip">${o.ventures.length} venture${o.ventures.length === 1 ? '' : 's'}</span><span class="chip">${o.pending_requests.length} waiting on you</span></div>
       <h2>Run the company</h2>
@@ -123,13 +127,13 @@ function renderLive() {
       <h2>Its tools</h2>
       <div class="code">company_overview  org_chart  start_venture  plan_venture
 assign_task  list_tasks  run_step  read_work  set_task
-verify_contact  board_report</div>`
+verify_contact  board_report</div>`)
     return
   }
   if (inside === 'lobby') {
     const pending = S.requests.filter(r => r.status === 'pending'), decided = S.requests.filter(r => r.status !== 'pending')
     const rails = S.events.filter(e => e.type === 'rail').reverse()
-    box.innerHTML = `<p class="kicker">Ground floor</p><h1>Lobby</h1>
+    setHTML(box, `<p class="kicker">Ground floor</p><h1>Lobby</h1>
       <p class="lede">Every department has its own floor. Ventures come in here, money waits here for you, and every message that leaves the building is checked here first.</p>
       <h2>Directory <small>Assign by id</small></h2>
       <ul class="dir">${S.floors.map(f => { const h = f.people.find(p => p.head) || f.people[0]; return `<li data-level="${f.id}" style="cursor:pointer"><span class="d">${f.id === 'office' ? '·' : num(f.id)}</span><span>${esc(NAME[f.id] || f.name)}${f.id === 'office' ? ` (${esc(h.name)})` : ''}</span><span class="h">${esc(f.people.map(p => p.id).join(' '))}</span></li>` }).join('')}</ul>
@@ -150,12 +154,12 @@ verify_contact  board_report</div>`
         <div class="ev">Found on <a href="${esc(m.source_url)}" target="_blank" rel="noopener">${esc(m.source_url)}</a>${m.evidence ? `: “${esc(m.evidence)}”` : ''}</div>
         <pre>${esc(m.body)}</pre></div>`).join('') || '<div class="emptybox">No outreach yet.</div>'}
       <h2>Rails <small>What the code stopped</small></h2>
-      ${rails.slice(0, 12).map(e => `<div class="card rail-hit"><div class="rule">${esc(RULE[e.rule] || 'Rail')}</div>${esc(e.text)}</div>`).join('') || '<div class="emptybox">Nothing blocked yet.</div>'}`
+      ${rails.slice(0, 12).map(e => `<div class="card rail-hit"><div class="rule">${esc(RULE[e.rule] || 'Rail')}</div>${esc(e.text)}</div>`).join('') || '<div class="emptybox">Nothing blocked yet.</div>'}`)
     return
   }
   const floor = floorOf(inside); if (!floor) return
   const n = num(inside)
-  box.innerHTML = `<p class="kicker">Floor ${n} · ${floor.people.length} Claude agent${floor.people.length > 1 ? 's' : ''}</p>
+  setHTML(box, `<p class="kicker">Floor ${n} · ${floor.people.length} Claude agent${floor.people.length > 1 ? 's' : ''}</p>
     <h1>${esc(NAME[inside] || floor.name)}</h1>
     <div class="chips"><span class="chip mono">${esc(floor.people.map(p => p.id).join(', '))}</span><span class="chip">Rails on</span></div>
     <h2>The team</h2>
@@ -167,18 +171,18 @@ verify_contact  board_report</div>`
         <div class="who"><b>${esc(p.name)}</b><span>${esc(p.title)}</span></div>
         <div class="handle">id: ${esc(p.id)}</div>${now}
         <span class="chip small">Claude Sonnet · medium · ${p.done} done</span></div></div>`
-    }).join('')}`
+    }).join('')}`)
 }
 
 function renderAfter() {
   const box = $('#p-after'); if (!box) return
-  if (!inside || ['lobby', 'terrace'].includes(inside) || !S) { box.innerHTML = ''; return }
+  if (!inside || ['lobby', 'terrace'].includes(inside) || !S) { setHTML(box, ''); return }
   const ts = tasksOn(inside)
   const prog = ts.filter(t => ['todo', 'doing', 'blocked', 'failed'].includes(t.status)), done = ts.filter(t => t.status === 'done')
   const list = tab === 'done' ? [...done].reverse() : prog
   const ids = new Set(floorOf(inside)?.people.map(p => p.id))
   const acts = S.events.filter(e => ids.has(e.who) || (e.task && ts.some(t => t.id === e.task))).slice(-10).reverse()
-  box.innerHTML = `<div class="tabs" role="tablist">
+  setHTML(box, `<div class="tabs" role="tablist">
       <button role="tab" data-tab="progress" aria-selected="${tab === 'progress'}">In progress (${prog.length})</button>
       <button role="tab" data-tab="done" aria-selected="${tab === 'done'}">Done (${done.length})</button></div>
     ${list.length ? list.map(t => `<div class="card task" data-task="${esc(t.id)}">
@@ -188,7 +192,7 @@ function renderAfter() {
     <h2>Activity</h2>
     ${acts.length ? `<ul class="act">${acts.map(e => `<li><b>${esc(ago(e.at))}</b> ${esc(e.text)}</li>`).join('')}</ul>` : '<div class="emptybox">No activity yet.</div>'}
     <h2>Documents</h2>
-    ${done.length ? done.map(t => `<div class="card doc" data-task="${esc(t.id)}"><b>${esc(t.title)}</b><span>${esc(t.assignee_name)}, ${esc(t.id)}</span></div>`).join('') : '<div class="emptybox">No documents yet.</div>'}`
+    ${done.length ? done.map(t => `<div class="card doc" data-task="${esc(t.id)}"><b>${esc(t.title)}</b><span>${esc(t.assignee_name)}, ${esc(t.id)}</span></div>`).join('') : '<div class="emptybox">No documents yet.</div>'}`)
 }
 
 function render() {
@@ -264,12 +268,12 @@ document.addEventListener('submit', async (e) => {
   }
   btn.disabled = false
   await refresh()
-  if (f.id === 'f-venture' && inside === 'lobby') renderForm()
+  if (f.id === 'f-venture' && inside === 'lobby') { const msg = $('#n-venture')?.textContent; renderForm(); if ($('#n-venture')) $('#n-venture').textContent = msg }
 })
 $('#back').addEventListener('click', leave)
 $('#autopilot').addEventListener('change', (e) => api('/api/autopilot', { on: e.target.checked }).then(refresh))
 addEventListener('keydown', (e) => {
-  if (e.target.closest('input,textarea,select') || $('#modal').open) return
+  if (e.target.closest('textarea,select,input:not([type=checkbox])') || $('#modal').open) return
   if (e.key === 'Escape' && inside) return leave()
   if (e.key === 'Enter' && !inside) return enter(focusId)
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {

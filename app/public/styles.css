@@ -177,3 +177,8 @@ dialog .close { float: right; position: sticky; top: 0; border: 1px solid var(--
   .hint { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Panel sections stack in a column so the lobby can put "Start a venture" first when the company is empty */
+.panel { display: flex; flex-direction: column; }
+.panel > .back { align-self: flex-start; order: -2; margin-bottom: 8px; }
+.panel[hidden] { display: none; }
