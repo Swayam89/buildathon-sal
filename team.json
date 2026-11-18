@@ -4,8 +4,17 @@
   "one_liner": "JARVIS, a CEO agent, runs a company of AI staff through an MCP tool that gives agents an org chart, a shared task board and hard safety rails.",
   "track": "ai-agents",
   "members": [
-    { "name": "Swayam Jain", "github": "Swayam89" },
-    { "name": "Aryan Bhatter", "github": "pending" },
-    { "name": "Laksh Pradhwani", "github": "pending" }
+    {
+      "name": "Swayam Jain",
+      "github": "Swayam89"
+    },
+    {
+      "name": "Aryan Bhatter",
+      "github": "aryanbhatter-hue"
+    },
+    {
+      "name": "Laksh Pradhwani",
+      "github": "TheRealLaksh"
+    }
   ]
 }
