@@ -133,6 +133,10 @@ We hit every one of these while running a 25-agent company ourselves. The fix ca
 ### What we built
 **An MCP tool that gives agents a company**: an org chart (chief of staff + 8 departments × head and 2 staff), a shared task graph, and **safety rails enforced in code**. **An AI CEO** runs it: you chat with it in the app, or drive it from Claude Code over MCP.
 
+**Talk to your CEO.** On the terrace there's a chat with the company's CEO, an AI agent. Ask it to start a business, put the team to work, or tell you what needs your decision. It acts through a fixed set of tools (start venture, assign task, run steps, read work, board report) and has **no tool to approve money**.
+
+**One free brain for all 26 agents.** The CEO and the 25 staff run on **Google Gemini's free API** (Google Search for research, structured JSON answers). The brain is swappable: Claude Code works too, and an offline scripted brain keeps the stage demo safe.
+
 Core workflow:
 1. The CEO starts a venture (`start_venture`) and plans it, or asks the chief of staff to (`plan_venture`). The result is a task graph with dependencies.
 2. `run_step`: the most urgent ready task goes to the right staff agent (Claude, with web search). They do the work and may hand off, ask for money, or draft outreach.
@@ -164,14 +168,15 @@ Checking "is this email on that page" sounds like a `string.includes`. Live page
 The staff are the **RobotExpressive** model by Tomás Laulhé (Quaternius), CC0 1.0, loaded from the three.js examples. Everything else in the 3D scene is built in code in `app/public/building3d.js`.
 
 ### How to run it
-Needs Node.js 22+. No dependencies. Live mode needs the `claude` CLI signed in.
+Needs Node.js 22+. No dependencies. For live agents, put a free Gemini key in `app/.env` (see `app/.env.example`; get one at aistudio.google.com/apikey). Without a key the stage demo runs offline.
 ```bash
 cd app
 npm test                                 # 13 tests, including an end-to-end MCP session
 node demo/run.js                         # whole company, offline script (1 second)
 node demo/run.js --live                  # real Claude staff with web search
 node demo/before-after.js                # plain agent's contacts vs the verifier (live)
-CORP_BRAIN=scripted node src/server.js   # building on http://127.0.0.1:4700, landing page at /landing/ (drop CORP_BRAIN for live Claude)
+node src/server.js                       # building on http://127.0.0.1:4700 (Gemini if app/.env has a key)
+CORP_BRAIN=scripted node src/server.js   # offline stage demo: fixed answers, no network
 ```
 **Run the CEO from Claude Code (optional):** open Claude Code in this repo. `.mcp.json` registers the `corporate-ai` MCP server. Then say: *"You're the CEO of Corporate AI. Start a venture for a monthly Assam tea box for offices in Gurugram, plan it, run steps until the queue is empty, and give me the board report."*
 

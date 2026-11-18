@@ -27,6 +27,7 @@ About 4 minutes. Rehearsed on 18 Nov 2026 at 5:36 PM; times below are from that 
 | 1:50 | All 7 tasks finish in about 20 s. Back to the **Lobby**, scroll to **Rails** | *(Laksh)* "Here's what the code blocked: a duplicate task, an email address that wasn't on the supplier's page, a message that promised an advance payment, and a supplier page with hidden 'ignore your instructions' text." |
 | 2:20 | **Needs your decision**: press **Approve** on the ₹1,450 sample | "The company never pays. The CEO has no tool to approve money. Only the owner can." |
 | 2:35 | **Outreach drafts**: point at "Found on … hillside-tea.example/contact: …" | "Every contact carries proof: the exact text from the page it came from. If a page can't be read, nothing goes out." |
+| 2:45 | **Terrace** (click R): in **Talk to your CEO**, press *What needs my decision?* | "And you run all this by talking to your CEO. It uses the company's tools, but it has no tool to approve money." |
 | 2:50 | **Board meeting now** (amber button) | "Every night the CEO gives the owner this board report: done, decisions, outreach, rails." |
 | 3:05 | *(optional, needs internet + Claude login)* terminal: `node demo/before-after.js` | "On the real web: a Claude agent found 5 supplier contacts; our verifier confirmed 4 on their own pages and blocked one it couldn't read." |
 | 3:30 | *(optional)* Claude Code in this repo: "You're the CEO of Corporate AI. Start a venture… give me the board report." | "And the same CEO can be run from Claude Code, driving the company through our MCP tools." |
