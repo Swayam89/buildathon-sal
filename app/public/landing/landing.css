@@ -123,9 +123,9 @@ td:nth-child(3) { color: var(--muted); }
 .proof-stat p:last-child { color: var(--muted); margin: 0; }
 .proof-quote { grid-column: span 4; font-size: var(--step-1); line-height: 1.35; font-weight: 600; }
 .proof-quote p { margin: 0; }
-.proof-jarvis { grid-column: span 12; border-color: rgba(255, 176, 46, .3) !important; }
-.proof-jarvis .who { color: var(--amber); font-weight: 700; font-size: 14px; margin: 0 0 6px; }
-.proof-jarvis p:last-child { margin: 0; font-size: var(--step-1); line-height: 1.4; }
+.proof-ceo { grid-column: span 12; border-color: rgba(255, 176, 46, .3) !important; }
+.proof-ceo .who { color: var(--amber); font-weight: 700; font-size: 14px; margin: 0 0 6px; }
+.proof-ceo p:last-child { margin: 0; font-size: var(--step-1); line-height: 1.4; }
 
 /* The hardest part: heading left, fixes right */
 .hard { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 5vw, 72px); max-width: calc(var(--max) + var(--gutter) * 2); margin: 0 auto; background: none; }
@@ -156,7 +156,7 @@ td:nth-child(3) { color: var(--muted); }
   .rail-grid { grid-template-columns: 1fr 1fr; }
   .rail.big { grid-column: span 2; grid-template-columns: 1fr; }
   .evidence { grid-column: 1; grid-row: auto; }
-  .proof-run, .proof-stat, .proof-quote, .proof-jarvis { grid-column: span 12; }
+  .proof-run, .proof-stat, .proof-quote, .proof-ceo { grid-column: span 12; }
   .nav nav { display: none; }
   .nav .btn { margin-left: auto; }
 }

@@ -116,7 +116,7 @@ See [RULES.md](RULES.md) for the full list.
 
 ---
 
-## Your project: Corporate AI, an AI company run by JARVIS
+## Your project: Corporate AI, an AI company run by the CEO
 
 - **Team:** SAL (Swayam Jain, Aryan Bhatter, Laksh Pradhwani)
 - **Track:** 02 · Build for AI Agents (`ai-agents`)
@@ -131,20 +131,20 @@ One agent can answer a question. A *team* of agents doing real business work (re
 We hit every one of these while running a 25-agent company ourselves. The fix can't be a better prompt, because prompts are suggestions. It has to be code the agents can't argue with.
 
 ### What we built
-**An MCP tool that gives agents a company**: an org chart (chief of staff + 8 departments × head and 2 staff), a shared task graph, and **safety rails enforced in code**. **JARVIS** is the CEO agent (Claude Code) that uses it.
+**An MCP tool that gives agents a company**: an org chart (chief of staff + 8 departments × head and 2 staff), a shared task graph, and **safety rails enforced in code**. **An AI CEO** runs it: you chat with it in the app, or drive it from Claude Code over MCP.
 
 Core workflow:
-1. JARVIS starts a venture (`start_venture`) and plans it, or asks the chief of staff to (`plan_venture`). The result is a task graph with dependencies.
+1. The CEO starts a venture (`start_venture`) and plans it, or asks the chief of staff to (`plan_venture`). The result is a task graph with dependencies.
 2. `run_step`: the most urgent ready task goes to the right staff agent (Claude, with web search). They do the work and may hand off, ask for money, or draft outreach.
 3. **Every proposal goes through the rails** before it touches the records:
    - **Verified contacts:** an email or phone is accepted only if it's printed on the page the agent cites. Proof is stored with every draft, and unreadable pages fail closed.
-   - **Money gate:** the company never pays. Costs become requests that only the human owner can approve (JARVIS has no approve tool). Messages that commit money are blocked.
+   - **Money gate:** the company never pays. Costs become requests that only the human owner can approve (The CEO has no approve tool). Messages that commit money are blocked.
    - **Honest outreach:** every message says it's from an AI, and cold mail can opt out.
    - **Content is data:** injected instructions are flagged, never acted on.
    - **Sane task graph:** unknown staff, duplicates, unknown dependencies, endless sub-task chains and daily step caps are refused, each with a reason the agent can read.
 4. `board_report`: done, in progress, decisions waiting for the owner, outreach drafts with proof, and what the rails blocked.
 
-**Inside the building** (`/`): a 3D night view of the company's tower. Every floor is a department and glows amber while an agent works. Click a floor for its team, their work and a form to give them more. The lobby holds ventures, the owner's approvals, verified outreach and the rails feed; the terrace is JARVIS.
+**Inside the building** (`/`): a 3D night view of the company's tower. Every floor is a department and glows amber while an agent works. Click a floor for its team, their work and a form to give them more. The lobby holds ventures, the owner's approvals, verified outreach and the rails feed; the terrace is the CEO.
 
 **Landing page** (`/landing/`): what Corporate AI is, with today's real results.
 
@@ -173,14 +173,14 @@ node demo/run.js --live                  # real Claude staff with web search
 node demo/before-after.js                # plain agent's contacts vs the verifier (live)
 CORP_BRAIN=scripted node src/server.js   # building on http://127.0.0.1:4700, landing page at /landing/ (drop CORP_BRAIN for live Claude)
 ```
-**JARVIS as CEO:** open Claude Code in this repo. `.mcp.json` registers the `corporate-ai` MCP server. Then say: *"You're the CEO of Corporate AI. Start a venture for a monthly Assam tea box for offices in Gurugram, plan it, run steps until the queue is empty, and give me the board report."*
+**Run the CEO from Claude Code (optional):** open Claude Code in this repo. `.mcp.json` registers the `corporate-ai` MCP server. Then say: *"You're the CEO of Corporate AI. Start a venture for a monthly Assam tea box for offices in Gurugram, plan it, run steps until the queue is empty, and give me the board report."*
 
 ### Demo
 1. Landing page (`/landing/`), then **Open the building**. In the lobby, start the tea-box venture → the chief of staff plans 5 tasks with dependencies.
 2. Autopilot: staff work through the queue; the rails feed fills up (a duplicate task, a made-up email, a message promising an advance payment, a supplier page with hidden instructions).
-3. The owner approves the ₹1,450 tasting sample; JARVIS couldn't have.
+3. The owner approves the ₹1,450 tasting sample; the CEO couldn't have.
 4. Open an outreach draft: the evidence snippet from the supplier's own page.
-5. Claude Code as JARVIS drives the same company over MCP.
+5. Claude Code as the CEO drives the same company over MCP.
 6. `before-after.js` live on the real web.
 
 The offline mode (scripted answers, fake supplier pages) exists so the demo can't fail on venue Wi-Fi. Live mode uses real Claude and the real web.

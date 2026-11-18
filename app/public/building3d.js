@@ -1,5 +1,5 @@
 // The Corporate AI tower at night, in Three.js.
-// Levels: G lobby (the podium), 1 to 8 departments, 9 chief of staff, R terrace (JARVIS).
+// Levels: G lobby (the podium), 1 to 8 departments, 9 chief of staff, R terrace (the CEO).
 // Overview: scroll moves the focus floor by floor, the camera follows and the floor gets an amber frame.
 // enter(id) flies the camera inside that floor; exit() comes back out.
 import * as THREE from 'three'
@@ -345,7 +345,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   const blink = []
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const b3 = new THREE.Mesh(G.sphere, new THREE.MeshBasicMaterial({ color: '#ff2a1a' })); b3.scale.setScalar(0.35); b3.position.set(sx * (TW / 2 + 1.6), towerTop + 5.1, sz * (TD / 2 + 1.6)); b3.userData.keep = true; scene.add(b3); blink.push(b3) }
 
-  // ---------- Terrace with the JARVIS hologram ----------
+  // ---------- Terrace with the CEO hologram ----------
   const terrace = new THREE.Group(); terrace.position.y = towerTop; scene.add(terrace)
   box(M.slab, TW + 4, 0.4, TD + 4, 0, 0, 0, terrace)
   for (const [w, d, x, z] of [[TW + 4.1, 0.12, 0, TD / 2 + 2], [0.12, TD + 4.1, TW / 2 + 2, 0], [0.12, TD + 4.1, -TW / 2 - 2, 0], [TW + 4.1, 0.12, 0, -TD / 2 - 2]]) box(M.cyan, w, 0.12, d, x, 0.2, z, terrace)
@@ -396,7 +396,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   box(M.warm, 21.6, 0.06, 0.1, -2, 0.35, -5.8, lobby); box(M.warm, 21.6, 0.06, 0.1, -2, PH - 0.55, -5.8, lobby)
   const ls = new THREE.Mesh(new THREE.PlaneGeometry(12, 2.2), new THREE.MeshBasicMaterial({ map: neonText('CORPORATE AI', { size: 140 }), transparent: true, depthWrite: false }))
   ls.position.set(-2, PH - 2.0, -5.75); lobby.add(ls)
-  const tag = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.5), new THREE.MeshBasicMaterial({ map: neonText('LED BY JARVIS   25 AI STAFF', { size: 70, color: '#e8f6ff' }), transparent: true }))
+  const tag = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.5), new THREE.MeshBasicMaterial({ map: neonText('LED BY YOUR CEO   25 AI STAFF', { size: 70, color: '#e8f6ff' }), transparent: true }))
   tag.position.set(-2, PH - 3.05, -5.74); lobby.add(tag)
   // Reception desk: a long walnut counter with a white top and a glowing base line
   box(walnut, 9, 1.1, 1.3, -2, 0.67, -2, lobby)

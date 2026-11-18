@@ -1,4 +1,4 @@
-// The company engine. The CEO (JARVIS, over MCP) or the chief of staff turns an idea into a
+// The company engine. The CEO agent (chat or MCP) or the chief of staff turns an idea into a
 // task graph; each step, one staff agent does one task; every proposal an agent makes
 // (new tasks, spending, outreach) goes through the rails before it touches the records.
 import { CEO, CHIEF_OF_STAFF, STAFF, DEPARTMENTS, person, managerOf, orgBrief } from './org.js'
@@ -251,7 +251,7 @@ export class Company {
     return [{ id: 'office', name: 'Chief of staff', people: [card(CHIEF_OF_STAFF)] }, ...DEPARTMENTS.map(d => ({ id: d.id, name: d.name, people: d.people.map(card) }))]
   }
 
-  // The nightly board report JARVIS reads to the owner.
+  // The nightly board report the CEO reads to the owner.
   report(ventureId = null) {
     const vs = ventureId ? [this.store.venture(ventureId)].filter(Boolean) : this.data.ventures
     return vs.map(v => {

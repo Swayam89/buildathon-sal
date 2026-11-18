@@ -61,7 +61,7 @@ function renderLevels() {
   setHTML($('#levels'), [...LEVELS].reverse().map(id => {
     const ts = tasksOn(id)
     const busy = ts.some(t => t.status === 'doing')
-    const sub = id === 'terrace' ? 'JARVIS, your AI and the CEO'
+    const sub = id === 'terrace' ? 'Your CEO, an AI agent'
       : id === 'lobby' ? 'Ventures and approvals'
       : `${ts.filter(t => t.status === 'todo').length} to do · ${ts.filter(t => t.status === 'done').length} done`
     const current = inside ? inside === id : focusId === id
@@ -89,7 +89,7 @@ function renderForm() {
   if (!inside || inside === 'terrace') return
   if (inside === 'lobby') {
     box.style.order = S?.ventures.length ? '' : '-1'
-    box.innerHTML = `<h2>Start a venture <small>JARVIS plans it</small></h2>
+    box.innerHTML = `<h2>Start a venture <small>Your CEO plans it</small></h2>
       <form class="formcard" id="f-venture">
         <label>Business idea<input name="idea" required placeholder="Monthly Assam tea box for office teams in Gurugram"></label>
         <label>Who has the problem, and why?<textarea name="problem" placeholder="Office managers re-order tea every week from whoever is cheapest..."></textarea></label>
@@ -116,12 +116,12 @@ function renderLive() {
   const box = $('#p-live'); if (!box || !inside || !S) return
   if (inside === 'terrace') {
     const o = S.overview
-    setHTML(box, `<p class="kicker">The terrace</p><h1>JARVIS</h1>
-      <p class="lede">Your AI, and the CEO of Corporate AI. JARVIS plans each venture, hands work to the floors, runs the staff and reads you the board report. It works through MCP tools, and it can't approve money: only you can.</p>
+    setHTML(box, `<p class="kicker">The terrace</p><h1>Your CEO</h1>
+      <p class="lede">An AI agent that runs Corporate AI. It plans each venture, hands work to the floors, runs the staff and reads you the board report. It works through MCP tools, and it can't approve money: only you can.</p>
       <div class="chips"><span class="chip">${o.staff} staff</span><span class="chip">${o.ventures.length} venture${o.ventures.length === 1 ? '' : 's'}</span><span class="chip">${o.pending_requests.length} waiting on you</span></div>
       <h2>Run the company</h2>
       <div class="chips"><button class="btn go" id="b-step">Run one step</button><button class="btn" id="b-report">Read the board report</button></div>
-      <h2>Talk to JARVIS <small>Claude Code + MCP</small></h2>
+      <h2>Run it from Claude Code <small>MCP</small></h2>
       <p class="lede">Open Claude Code in this repo; <code>.mcp.json</code> connects it to the company. Then say:</p>
       <div class="code">You're the CEO of Corporate AI. Start a venture for a monthly Assam tea box for offices in Gurugram, plan it, run steps until the queue is empty, and give me the board report.</div>
       <h2>Its tools</h2>
@@ -138,7 +138,7 @@ verify_contact  board_report</div>`)
       <h2>Directory <small>Assign by id</small></h2>
       <ul class="dir">${S.floors.map(f => { const h = f.people.find(p => p.head) || f.people[0]; return `<li data-level="${f.id}" style="cursor:pointer"><span class="d">${f.id === 'office' ? '·' : num(f.id)}</span><span>${esc(NAME[f.id] || f.name)}${f.id === 'office' ? ` (${esc(h.name)})` : ''}</span><span class="h">${esc(f.people.map(p => p.id).join(' '))}</span></li>` }).join('')}</ul>
       <h2>The company</h2>
-      <p class="lede">25 AI staff, led by JARVIS as CEO. Each thinks with Claude Sonnet at medium effort. Contacts are verified on their source page, every message says it comes from an AI, and the company never pays: costs come to you.</p>
+      <p class="lede">25 AI staff, led by an AI CEO. Contacts are verified on their source page, every message says it comes from an AI, and the company never pays: costs come to you.</p>
       <h2>Ventures <small>${S.ventures.length}</small></h2>
       ${S.ventures.map(v => `<div class="card"><b>${esc(v.id)}</b> ${esc(v.idea)} <span class="state ${v.status === 'running' ? 'doing' : ''}">${esc(v.status)}</span>${v.plan ? `<p class="lede" style="margin:6px 0 0;font-size:13px">${esc(v.plan)}</p>` : ''}</div>`).join('') || '<div class="emptybox">No ventures yet. Start one above.</div>'}
       <h2>Needs your decision <small>The company never pays</small></h2>
@@ -238,7 +238,7 @@ document.addEventListener('click', async (e) => {
   }
   if (e.target.closest('#b-report') || e.target.closest('#meeting')) {
     const r = await api('/api/report')
-    return modal(`<p class="kicker" style="margin-top:0">Board meeting, chaired by JARVIS</p>${md(r.report)}`)
+    return modal(`<p class="kicker" style="margin-top:0">Board meeting, chaired by your CEO</p>${md(r.report)}`)
   }
   if (e.target.closest('#b-step')) {
     e.target.disabled = true

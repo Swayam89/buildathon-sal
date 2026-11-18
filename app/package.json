@@ -1,7 +1,7 @@
 {
   "name": "corporate-ai",
   "version": "0.1.0",
-  "description": "An AI company run by JARVIS: an MCP tool that gives agents an org chart, a shared task graph and hard safety rails",
+  "description": "An AI company run by an AI CEO: an org chart that gives agents an org chart, a shared task graph and hard safety rails",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",

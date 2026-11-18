@@ -1,7 +1,7 @@
 {
   "team_name": "SAL",
-  "project_title": "Corporate AI: an AI company run by JARVIS",
-  "one_liner": "JARVIS, a CEO agent, runs a company of AI staff through an MCP tool that gives agents an org chart, a shared task board and hard safety rails.",
+  "project_title": "Corporate AI: an AI company with rules in code",
+  "one_liner": "An AI CEO runs a company of 25 AI staff with an org chart, a shared task board and safety rails written in code: no made-up contacts, no spending without the owner.",
   "track": "ai-agents",
   "members": [
     {

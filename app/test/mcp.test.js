@@ -21,7 +21,7 @@ function server() {
   return { call, tool, stop: () => child.kill() }
 }
 
-test('JARVIS can run the company end to end over MCP, and the rails hold', async () => {
+test('The CEO agent can run the company end to end over MCP, and the rails hold', async () => {
   const s = server()
   try {
     const init = await s.call('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '0' } })

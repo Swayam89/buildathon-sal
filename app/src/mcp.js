@@ -1,4 +1,4 @@
-// MCP server (stdio, JSON-RPC 2.0): the tools JARVIS, the CEO agent, uses to run the company.
+// MCP server (stdio, JSON-RPC 2.0): the tools the CEO agent uses to run the company.
 // Add it to Claude Code with the .mcp.json at the repo root, then talk to Claude as the CEO.
 // The CEO can plan, delegate, run work and read results; it can NOT approve spending.
 // Money decisions belong to the human owner (the dashboard), and the rails apply to everyone.
@@ -22,7 +22,7 @@ export const TOOLS = [
   { name: 'assign_task', description: 'Give a task to one staff member. The rails refuse unknown staff, duplicates of existing tasks and unknown dependencies, and say why.', inputSchema: { type: 'object', required: ['venture', 'title', 'assignee'], properties: {
       venture: str('Venture id.'), title: str('What to do, under 10 words.'), detail: str('What a good result looks like.'), assignee: str('Staff id from org_chart.'),
       priority: { type: 'string', enum: ['urgent', 'normal', 'low'] }, after: { type: 'array', items: { type: 'string' }, description: 'Task ids that must finish first.' } } },
-    run: (a) => co.addTask({ venture: a.venture, title: a.title, detail: a.detail, assignee: a.assignee, priority: a.priority, deps: a.after || [], by: 'jarvis' }) },
+    run: (a) => co.addTask({ venture: a.venture, title: a.title, detail: a.detail, assignee: a.assignee, priority: a.priority, deps: a.after || [], by: 'ceo' }) },
   { name: 'list_tasks', description: 'Tasks, optionally for one venture or status (todo, doing, done, blocked, failed, cancelled).', inputSchema: { type: 'object', properties: { venture: str('Venture id.'), status: str('Status filter.') } },
     run: (a) => co.store.tasks(Object.fromEntries(Object.entries({ venture: a.venture, status: a.status }).filter(([, v]) => v)))
       .map(t => ({ id: t.id, title: t.title, assignee: co.nameOf(t.assignee), status: t.status, priority: t.priority, after: t.deps, summary: t.output?.summary || '' })) },

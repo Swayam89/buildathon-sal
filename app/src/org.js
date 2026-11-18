@@ -1,8 +1,8 @@
 // The org chart: who works at the company, what each person does, who they report to.
-// JARVIS is the CEO (an outside agent that drives the company through MCP).
+// The CEO is an AI agent: it runs the company through the CEO chat (Gemini) or over MCP (Claude Code).
 // Everyone else is a staff agent the company runs itself.
 
-export const CEO = { id: 'jarvis', name: 'JARVIS', title: 'Chief executive officer', dept: 'board' }
+export const CEO = { id: 'ceo', name: 'CEO', title: 'Chief executive officer', dept: 'board' }
 
 export const CHIEF_OF_STAFF = {
   id: 'chief', name: 'Naina', title: 'Chief of staff', dept: 'office', head: true,

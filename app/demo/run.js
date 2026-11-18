@@ -15,7 +15,7 @@ const say = (s) => console.log(s)
 
 say(`\nCorporate AI demo (${live ? 'live Claude staff' : 'offline script'})\n`)
 const v = co.startVenture({ idea: DEMO_IDEA, problem: DEMO_PROBLEM })
-say(`JARVIS started ${v.id}: ${v.idea}`)
+say(`The CEO started ${v.id}: ${v.idea}`)
 const plan = await co.plan(v.id)
 say(`Naina (chief of staff) planned it: ${plan.summary}`)
 for (const r of plan.tasks) say(r.ok ? `  + ${r.task.id} ${r.task.title} -> ${co.nameOf(r.task.assignee)}` : `  x refused: ${r.reason}`)
