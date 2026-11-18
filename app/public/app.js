@@ -60,7 +60,7 @@ function renderLevels() {
     const ts = tasksOn(id)
     const busy = ts.some(t => t.status === 'doing')
     const sub = id === 'terrace' ? 'JARVIS, your AI and the CEO'
-      : id === 'lobby' ? 'Ventures, approvals and outreach'
+      : id === 'lobby' ? 'Ventures and approvals'
       : `${ts.filter(t => t.status === 'todo').length} to do · ${ts.filter(t => t.status === 'done').length} done`
     const current = inside ? inside === id : focusId === id
     return `<li><button class="level ${busy ? 'busy' : ''} ${id === 'terrace' ? 'top' : ''}" data-level="${id}" aria-current="${current}" title="${esc(NAME[id] || floorOf(id)?.name || id)}">
