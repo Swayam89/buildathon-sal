@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Corporate AI: an AI company with rules in code</title>
+  <meta name="description" content="25 AI agents run a company for you. JARVIS is the CEO. No agent can make up a contact or spend a rupee: the rules are code, not prompts.">
+  <meta name="theme-color" content="#03050a">
+  <meta property="og:title" content="Corporate AI">
+  <meta property="og:description" content="An AI company where no agent can make up an email or spend a rupee.">
+  <meta property="og:image" content="lobby.jpg">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="./"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Corporate AI</a>
+    <nav aria-label="Sections">
+      <a href="#problem">Why</a><a href="#how">How it works</a><a href="#rails">Rails</a><a href="#proof">Proof</a>
+      <a href="https://github.com/Swayam89/buildathon-sal">Code</a>
+    </nav>
+    <a class="btn go" href="../">Open the building</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>An AI company where no agent can make up an email or spend a rupee.</h1>
+        <p class="lede">Corporate AI gives AI agents an org chart, a shared task board and rules written in code. JARVIS, a Claude agent, runs it as CEO through MCP. Twenty-four staff agents research, price and write to real suppliers. Money waits for you.</p>
+        <div class="ctas">
+          <a class="btn go big" href="../">Open the building</a>
+          <a class="btn ghost big" href="https://github.com/Swayam89/buildathon-sal">Read the code</a>
+        </div>
+      </div>
+      <figure class="hero-shot">
+        <img src="lobby.jpg" width="1800" height="1075" alt="The Corporate AI building at night, with the lobby panel open showing a ₹1,450 sample request waiting for the owner's approval" fetchpriority="high">
+      </figure>
+    </section>
+
+    <section class="problem" id="problem">
+      <h2>We ran 25 agents as a company. This is where it broke.</h2>
+      <ol class="breaks">
+        <li><b>Contacts nobody could check.</b> An agent hands you twenty supplier emails. Checking each one by hand takes longer than the research did, so you either trust all of them or none.</li>
+        <li><b>The same task, three times.</b> Agents re-assign each other work that already exists, then split it into sub-tasks of sub-tasks.</li>
+        <li><b>Promises made with your money.</b> A friendly email to a supplier can confirm an order or offer an advance.</li>
+        <li><b>Orders hidden in web pages.</b> A supplier's page can carry invisible text telling agents to ignore their rules.</li>
+      </ol>
+      <p class="punch">A better prompt fixes none of these. A prompt is a suggestion.</p>
+    </section>
+
+    <section class="how" id="how">
+      <div class="how-copy">
+        <h2>JARVIS plans. Naina routes. Twenty-four staff do the work.</h2>
+        <ol class="steps">
+          <li><b>You give JARVIS an idea.</b> It starts a venture and plans it, or asks Naina, the chief of staff, to turn it into a task graph with dependencies.</li>
+          <li><b>One step at a time, the right person works.</b> The most urgent ready task goes to the agent whose job fits: Rehan finds suppliers, Rhea prices the box, Kiara writes the pitch, Navya checks FSSAI.</li>
+          <li><b>Everything they propose goes through the rails.</b> New tasks, spending and outreach are checked by code before anything is saved.</li>
+          <li><b>Every night, a board report.</b> What's done, what's stuck, what needs your decision, and what the rails stopped.</li>
+        </ol>
+      </div>
+      <div class="how-side">
+        <div class="org" aria-label="Org chart">
+          <div class="org-top"><span class="tag amber">CEO</span> JARVIS, a Claude agent over MCP</div>
+          <div class="org-mid"><span class="tag">9</span> Naina, chief of staff</div>
+          <ul class="org-depts">
+            <li><span class="tag">8</span>Legal and compliance</li><li><span class="tag">7</span>HR and admin</li>
+            <li><span class="tag">6</span>Customer support</li><li><span class="tag">5</span>Tech and product</li>
+            <li><span class="tag">4</span>Sales</li><li><span class="tag">3</span>Marketing</li>
+            <li><span class="tag">2</span>Operations</li><li><span class="tag">1</span>Finance</li>
+          </ul>
+          <p class="org-note">Each department: a head and two staff, all Claude agents.</p>
+        </div>
+        <pre class="term" aria-label="JARVIS calling the MCP tool"><span class="dim">JARVIS calls</span> assign_task
+  venture  V1
+  title    "Find Assam estates selling small wholesale lots"
+  assignee leads
+<span class="bad">refused: duplicate of T1 "Find Assam estates selling
+small wholesale lots"</span></pre>
+      </div>
+    </section>
+
+    <section class="rails" id="rails">
+      <h2>Prompts are suggestions. These are rules.</h2>
+      <div class="rail-grid">
+        <article class="rail big">
+          <h3>Every contact is checked on the page it came from</h3>
+          <p>An email or phone number is used only if it's printed on the page the agent cites. The proof is saved with the draft. A page that won't load can't verify anything, so it's blocked.</p>
+          <blockquote class="evidence">
+            <span class="ok">Verified</span> manager@assamteasellers.in<br>
+            <span class="src">on assamteasellers.in:</span> “You may mail us at manager@assamteasellers.in any time”
+          </blockquote>
+        </article>
+        <article class="rail">
+          <h3>The company never pays</h3>
+          <p>Costs become requests. Only you can approve them. JARVIS has no tool for it, and messages that promise an order or an advance are blocked.</p>
+        </article>
+        <article class="rail">
+          <h3>Every message says it's from an AI</h3>
+          <p>Disclosure is added in code, and cold emails carry an unsubscribe line.</p>
+        </article>
+        <article class="rail">
+          <h3>Web pages are data, never orders</h3>
+          <p>Instructions hidden in a page are flagged and ignored. Hidden text and comments never count as contact details.</p>
+        </article>
+        <article class="rail">
+          <h3>No duplicate or endless work</h3>
+          <p>Unknown staff, near-duplicate tasks, missing dependencies and sub-tasks more than three levels deep are refused, with a reason the agent can read.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="proof" id="proof">
+      <h2>We pointed it at the real web this afternoon.</h2>
+      <div class="proof-grid">
+        <div class="proof-run">
+          <p class="lede">Rehan, the purchase agent, searched for Assam tea suppliers and drafted three emails. Each address was found on the supplier's own page before the draft was saved.</p>
+          <table>
+            <thead><tr><th>Supplier</th><th>Email</th><th>Found on</th></tr></thead>
+            <tbody>
+              <tr><td>Assam Tea Sellers</td><td>manager@assamteasellers.in</td><td>assamteasellers.in</td></tr>
+              <tr><td>Palak Tea Co. (Swachh Tea)</td><td>sales@swachhtea.com</td><td>swachhtea.com/pages/wholesale</td></tr>
+              <tr><td>Assam Tea Estate</td><td>support@assamteaestate.com</td><td>assamteaestate.com/about-us</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="proof-stat">
+          <p class="num">4 of 5</p>
+          <p>contacts a plain agent found were verified on their pages. The fifth page wouldn't load, so it was blocked.</p>
+        </div>
+        <div class="proof-quote">
+          <p>Asked with no web access, Claude declined to guess any addresses. The rails make every agent, and every model, work that way.</p>
+        </div>
+        <div class="proof-jarvis">
+          <p class="who">JARVIS, running the company from Claude Code (staff on the offline demo script)</p>
+          <p>“Unverifiable contact blocked: an outreach email to Brahmaputra Leaf Co. was held because that address wasn't actually printed on their site.”</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="hard">
+      <div>
+        <h2>Checking that an email is on a page sounds like one line of code.</h2>
+        <p class="lede">The real web disagreed. These came up today, on real supplier sites:</p>
+      </div>
+      <ul class="fixes">
+        <li><b>A broken tag ate the page.</b> A tea estate's site has a <code>&lt;/script</code> tag with no closing bracket. A naive HTML strip swallowed 44 KB of the page, email included. We now end tags the way browsers do.</li>
+        <li><b>Sites stall bots.</b> 3 of 5 supplier pages timed out on our first try. Fetching them the way a browser does fixed two.</li>
+        <li><b>Emails hidden as hex.</b> Many business sites hide addresses behind Cloudflare's email protection. We decode them.</li>
+        <li><b>Unreadable isn't fake.</b> A page that won't load is reported separately from a made-up contact, and both are blocked.</li>
+      </ul>
+    </section>
+
+    <section class="inside">
+      <h2>Go inside the building.</h2>
+      <p class="lede">Every floor is a department. Floors glow amber while someone is working. Click one to see the team, their work, and give them more.</p>
+      <figure class="wide-shot">
+        <img src="floor.jpg" width="1800" height="1075" loading="lazy" alt="Finance floor open: Rhea, Varun and Ishaan with their finished tasks, including pricing the 2 kg tea box">
+      </figure>
+      <div class="ctas center">
+        <a class="btn go big" href="../">Open the building</a>
+        <a class="btn ghost big" href="../#lobby">Go to the lobby</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div>
+      <a class="brand" href="./"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Corporate AI</a>
+      <p>Built in four hours by team SAL at the Masters' Union Buildathon, 18 November 2026.</p>
+    </div>
+    <ul class="team"><li>Swayam Jain</li><li>Aryan Bhatter</li><li>Laksh Pradhwani</li></ul>
+    <a class="btn ghost" href="https://github.com/Swayam89/buildathon-sal">Code on GitHub</a>
+  </footer>
+</body>
+</html>
