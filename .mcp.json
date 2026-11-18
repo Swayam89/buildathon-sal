@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "corporate-ai": {
+      "command": "node",
+      "args": ["app/src/mcp.js"]
+    }
+  }
+}

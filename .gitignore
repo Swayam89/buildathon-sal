@@ -24,3 +24,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Company data (local runs)
+app/data/
