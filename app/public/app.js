@@ -140,7 +140,7 @@ verify_contact  board_report</div>`)
       <h2>The company</h2>
       <p class="lede">25 AI staff, led by JARVIS as CEO. Each thinks with Claude Sonnet at medium effort. Contacts are verified on their source page, every message says it comes from an AI, and the company never pays: costs come to you.</p>
       <h2>Ventures <small>${S.ventures.length}</small></h2>
-      ${S.ventures.map(v => `<div class="card"><b>${esc(v.id)}</b> ${esc(v.idea)} <span class="state ${v.status === 'running' ? 'doing' : ''}">${esc(v.status)}</span>${v.plan ? `<p class="lede" style="margin:6px 0 0;font-size:13px">${esc(v.plan)}</p>` : ''}</div>`).join('') || '<div class="emptybox">No ventures yet. Start one below.</div>'}
+      ${S.ventures.map(v => `<div class="card"><b>${esc(v.id)}</b> ${esc(v.idea)} <span class="state ${v.status === 'running' ? 'doing' : ''}">${esc(v.status)}</span>${v.plan ? `<p class="lede" style="margin:6px 0 0;font-size:13px">${esc(v.plan)}</p>` : ''}</div>`).join('') || '<div class="emptybox">No ventures yet. Start one above.</div>'}
       <h2>Needs your decision <small>The company never pays</small></h2>
       ${[...pending, ...decided.reverse()].map(r => `<div class="card req ${r.status === 'pending' ? '' : 'decided'}">
         ${r.kind === 'spend' ? `<div class="amt">${inr(r.amount_inr)}</div><div>to <b>${esc(r.payee)}</b></div>` : '<div class="amt">Decision</div>'}
