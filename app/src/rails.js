@@ -4,20 +4,37 @@ import { person, STAFF } from './org.js'
 
 // ---------- 1. Contacts must be real: printed on the page the agent cites ----------
 
-export const emailsIn = (text) =>
-  [...new Set([...String(text).matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)].map(m => m[0].toLowerCase()))]
-    .filter(e => !/\.(png|jpe?g|gif|svg|webp)$/.test(e))
+// Emails: split the text into words, keep the ones shaped like name@domain.tld.
+const EDGE = /^[<(["'“‘,;:]+|[>)\]"'”’,;:.!?]+$/g
+function asEmail(word) {
+  const w = word.replace(EDGE, '').toLowerCase()
+  const at = w.indexOf('@')
+  if (at < 1 || at !== w.lastIndexOf('@')) return null
+  const local = w.slice(0, at), host = w.slice(at + 1)
+  const labels = host.split('.')
+  if (labels.length < 2 || labels.some(l => !l || !/^[a-z0-9-]+$/.test(l))) return null
+  if (!/^[a-z0-9._%+-]+$/.test(local) || labels.at(-1).length < 2) return null
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(labels.at(-1))) return null // image@2x.png
+  return w
+}
+export const emailsIn = (text) => [...new Set(String(text).split(/[\s/]+/).map(asEmail).filter(Boolean))]
 
-// Digits only, without the +91 country code or a trunk 0, so "+91 98765 43210" and "098765-43210" match.
-export const phoneKey = (p) => String(p).replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').replace(/^0+/, '')
+// Phones: compare on the last 10 digits (an Indian number without +91 or a leading 0),
+// or all of them when the number is shorter (landlines, short codes).
+export const phoneKey = (p) => { const d = String(p).replace(/\D/g, ''); return d.length > 10 ? d.slice(-10) : d }
 
+// Walk the text and collect runs of digits that may be broken up by spaces, dots, dashes or brackets.
 export function phonesIn(text) {
-  const out = new Set()
-  for (const m of String(text).matchAll(/\+?\d[\d\s().-]{6,16}\d/g)) {
-    const k = phoneKey(m[0])
-    if (k.length >= 8 && k.length <= 12) out.add(k)
+  const found = new Set()
+  let digits = '', gap = 0
+  const flush = () => { if (digits.length >= 8 && digits.length <= 13) found.add(phoneKey(digits)); digits = ''; gap = 0 }
+  for (const ch of String(text) + ' x') {
+    if (ch >= '0' && ch <= '9') { digits += ch; gap = 0 }
+    else if (digits && ' .-()+'.includes(ch) && gap < 2) gap++
+    else if (!digits && ch === '+') continue
+    else flush()
   }
-  return [...out]
+  return [...found]
 }
 
 // Turn HTML into plain text so hidden markup can't smuggle in addresses.
