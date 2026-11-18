@@ -3,45 +3,45 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Corporate AI, inside</title>
-  <meta name="description" content="Corporate AI, inside: every floor, every agent, every task, and the rails that hold them.">
+  <title>Corporate AI | swaybiz.in</title>
+  <meta name="description" content="Corporate AI, inside: every floor, every team, every task.">
   <meta name="theme-color" content="#03050a">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="styles.css">
-  <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }</script>
+  <script type="importmap">{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 </head>
 <body>
-  <canvas id="scene" aria-label="3D view of the Corporate AI building"></canvas>
+  <canvas id="scene" aria-label="3D view of the Corporate AI building. Scroll to move between floors."></canvas>
 
   <header class="bar">
-    <a class="brand" href="landing/">
-      <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span>Corporate AI</span>
-    </a>
-    <span class="crumb" id="crumb"></span>
+    <a class="brand" href="landing/">swaybiz<span>.in</span></a>
+    <span class="crumb"><a href="#" id="crumb-home">Corporate AI</a><span id="crumb"></span></span>
     <div class="status">
       <span class="pill"><b id="s-working">0</b> working now</span>
-      <span class="pill">Today <b id="s-steps">0</b> steps</span>
-      <span class="pill"><b id="s-outreach">0</b> verified outreach</span>
-      <span class="pill alert"><b id="s-rails">0</b> rails blocked</span>
-      <span class="pill brain" id="s-brain"></span>
-      <label class="pill toggle"><input type="checkbox" id="autopilot"> Autopilot</label>
-      <button class="cta" id="step">Run one step</button>
+      <span class="pill">Today <b id="s-steps">0</b> / <span id="s-cap">60</span> steps</span>
+      <span class="pill"><b id="s-drafts">0</b> drafts · <b id="s-rails" class="red">0</b> blocked</span>
+      <label class="pill toggle" title="Staff keep working through the queue"><input type="checkbox" id="autopilot"> Autopilot</label>
+      <button class="meeting" id="meeting">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>
+        Board meeting now
+      </button>
     </div>
   </header>
 
-  <nav class="rail" aria-label="Floors">
-    <ol id="levels"></ol>
-  </nav>
+  <nav class="rail" id="rail" aria-label="Floors"><ol id="levels"></ol></nav>
 
   <aside class="panel" id="panel" hidden>
     <button class="back" id="back">Building</button>
-    <div id="panel-body"></div>
+    <div id="p-live"></div>
+    <div id="p-form"></div>
+    <div id="p-after"></div>
   </aside>
 
-  <p class="ticker" id="ticker">Drag to turn the building. Click a floor, or pick one from the list, to go in.</p>
+  <p class="hint" id="hint">Scroll to move between floors. Click a floor, or press Enter, to go in.</p>
 
   <dialog id="modal">
     <form method="dialog"><button class="close" aria-label="Close">×</button></form>
