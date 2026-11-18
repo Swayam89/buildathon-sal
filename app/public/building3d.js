@@ -333,6 +333,11 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   // Vertical stone fins on the side faces
   for (const sx of [-1, 1]) for (let z = -3; z <= 3; z += 3) box(M.stoneDark, 0.5, towerTop - roofY, 0.5, sx * (TW / 2 + 0.3), roofY + (towerTop - roofY) / 2, z)
 
+  // Warm uplights washing the stone corners of the tower
+  for (const [x, z] of [[TW / 2 + 0.9, TD / 2 + 3], [-TW / 2 - 0.9, TD / 2 + 3]]) {
+    const up = new THREE.SpotLight('#ffcf91', 420, 60, 0.3, 0.7, 1.4); up.position.set(x, roofY + 0.6, z)
+    up.target.position.set(x, roofY + 30, z - 2.2); scene.add(up); scene.add(up.target)
+  }
   // Spandrel bands between floors and a lit crown at the top
   const band = new THREE.MeshStandardMaterial({ color: '#30353d', roughness: 0.3, metalness: 0.8 })
   for (let i = 1; i <= 9; i++) box(band, TW + 0.5, 0.45, TD + 0.5, 0, levelBase(i) + 0.5 + FH - 0.05, 0)
@@ -346,6 +351,14 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   for (const [w, d, x, z] of [[TW + 4.1, 0.12, 0, TD / 2 + 2], [0.12, TD + 4.1, TW / 2 + 2, 0], [0.12, TD + 4.1, -TW / 2 - 2, 0], [TW + 4.1, 0.12, 0, -TD / 2 - 2]]) box(M.cyan, w, 0.12, d, x, 0.2, z, terrace)
   for (let x = -TW / 2 - 1.5; x <= TW / 2 + 1.5; x += 0.9) { box(M.stone, 0.35, 2.4, 0.35, x, 1.4, TD / 2 + 1.8, terrace); box(M.stone, 0.35, 2.4, 0.35, x, 1.4, -TD / 2 - 1.8, terrace) }
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.2, 4), M.stone); p.position.set(sx * (TW / 2 + 1.6), 3.4, sz * (TD / 2 + 1.6)); terrace.add(p); const l = new THREE.Mesh(G.sphere, M.lamp); l.scale.setScalar(0.35); l.position.set(sx * (TW / 2 + 1.6), 4.6, sz * (TD / 2 + 1.6)); terrace.add(l) }
+  // Planters, benches and a lit pad ring around the hologram
+  for (const [x, z] of [[-TW / 2 + 0.5, TD / 2 - 0.5], [TW / 2 - 0.5, TD / 2 - 0.5], [-TW / 2 + 0.5, -TD / 2 + 0.5], [TW / 2 - 0.5, -TD / 2 + 0.5]]) {
+    box(M.stone, 2.4, 0.9, 1.2, x, 0.65, z, terrace); box(M.grass, 2.2, 0.1, 1, x, 1.15, z, terrace)
+    for (let k = 0; k < 4; k++) { const t2 = new THREE.Mesh(G.tree, M.leaf); t2.scale.setScalar(0.45); t2.position.set(x - 0.8 + k * 0.55, 1.5, z); terrace.add(t2) }
+  }
+  for (const z of [-3.2, 3.2]) { box(M.wood, 3.4, 0.12, 0.7, -5.5, 0.62, z, terrace); box(M.dark, 0.12, 0.45, 0.6, -6.9, 0.4, z, terrace); box(M.dark, 0.12, 0.45, 0.6, -4.1, 0.4, z, terrace) }
+  const pad = new THREE.Mesh(new THREE.RingGeometry(3.6, 3.8, 64), new THREE.MeshBasicMaterial({ color: C.cyan, side: THREE.DoubleSide })); pad.rotation.x = -Math.PI / 2; pad.position.y = 0.22; terrace.add(pad)
+  const pad2 = new THREE.Mesh(new THREE.RingGeometry(2.2, 2.3, 64), new THREE.MeshBasicMaterial({ color: C.amber, side: THREE.DoubleSide })); pad2.rotation.x = -Math.PI / 2; pad2.position.y = 0.22; terrace.add(pad2)
   // Hologram: a head made of points, a bright core and two orbit rings
   const holo = new THREE.Group(); holo.position.set(0, 7.5, 0); terrace.add(holo); holo.userData.keep = true
   const pts = [], pr = rng(42)
@@ -555,7 +568,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
 
   // ---------- Camera ----------
   let focus = 0, inside = null
-  const cam = { pos: new THREE.Vector3(48, 14, 70), look: new THREE.Vector3(0, 8, 0) }
+  const cam = { pos: new THREE.Vector3(140, 110, 190), look: new THREE.Vector3(0, 30, 0) }   // starts high over the city and flies in
   const goal = { pos: cam.pos.clone(), look: cam.look.clone() }
   let drift = 0
 
