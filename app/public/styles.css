@@ -182,3 +182,17 @@ dialog .close { float: right; position: sticky; top: 0; border: 1px solid var(--
 .panel { display: flex; flex-direction: column; }
 .panel > .back { align-self: flex-start; order: -2; margin-bottom: 8px; }
 .panel[hidden] { display: none; }
+
+/* CEO chat */
+.chat { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; margin-bottom: 10px; padding-right: 2px; }
+.bubble { border: 1px solid var(--edge); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; line-height: 1.5; background: rgba(255, 255, 255, .03); }
+.bubble b { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.bubble.you { border-color: rgba(255, 181, 46, .35); background: rgba(255, 181, 46, .06); margin-left: 32px; }
+.bubble.ceo { margin-right: 16px; }
+.bubble .did { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+.chip.bad { color: var(--red); border-color: rgba(255, 122, 107, .4); }
+.chip.quick { background: transparent; cursor: pointer; font-size: 12.5px; }
+.chip.quick:hover { color: var(--text); border-color: var(--amber); }
+details.more { margin-top: 18px; color: var(--muted); }
+details.more summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+details.more[open] summary { margin-bottom: 8px; }

@@ -70,6 +70,28 @@ function renderLevels() {
   }).join(''))
 }
 
+// ---------- CEO chat ----------
+let chatLog = []
+function drawChat() {
+  const box = $('#chat'); if (!box) return
+  box.innerHTML = chatLog.map(m => `<div class="bubble ${m.who}"><b>${m.who === 'you' ? 'You' : 'CEO'}</b><div>${esc(m.text).replace(/\n/g, '<br>')}</div>${m.actions?.length ? `<div class="did">${m.actions.map(a => `<span class="chip small ${a.ok ? '' : 'bad'}">${esc(a.tool.replace(/_/g, ' '))}</span>`).join('')}</div>` : ''}</div>`).join('') || '<div class="emptybox">Ask your CEO to start a business, check on the team, or tell you what needs your decision.</div>'
+  box.scrollTop = box.scrollHeight
+}
+async function loadChat() {
+  const h = await api('/api/ceo')
+  if ($('#ceo-mode')) $('#ceo-mode').textContent = h.live ? `Live, ${h.brain}` : 'Offline: simple commands'
+  chatLog = h.messages.map(m => ({ who: m.text.startsWith('You: ') ? 'you' : 'ceo', text: m.text.replace(/^(You|CEO): /, '') }))
+  drawChat()
+}
+async function askCEO(message) {
+  chatLog.push({ who: 'you', text: message }); drawChat()
+  const n = $('#n-ceo'); if (n) { n.className = 'note'; n.textContent = 'Your CEO is working…' }
+  const r = await api('/api/ceo', { message })
+  if (r.ok === false) { if (n) { n.className = 'note bad'; n.textContent = r.reason } }
+  else { chatLog.push({ who: 'ceo', text: r.reply, actions: r.actions }); if (n) n.textContent = '' }
+  drawChat(); refresh()
+}
+
 // ---------- Panels ----------
 function show(id) {
   inside = id
@@ -86,7 +108,18 @@ function show(id) {
 
 function renderForm() {
   const box = $('#p-form'); box.innerHTML = ''
-  if (!inside || inside === 'terrace') return
+  if (!inside) return
+  if (inside === 'terrace') {
+    box.innerHTML = `<h2>Talk to your CEO <small id="ceo-mode"></small></h2>
+      <div class="chat" id="chat" role="log" aria-live="polite" aria-label="Conversation with your CEO"></div>
+      <form class="formcard" id="f-ceo">
+        <label>Message<textarea name="message" rows="2" required placeholder="Start a tea box business for offices in Gurugram and get the team working"></textarea></label>
+        <div class="chips">${['What needs my decision?', 'Run 3 steps', 'Give me the board report'].map(q => `<button type="button" class="chip quick" data-ask="${q}">${q}</button>`).join('')}</div>
+        <button class="give">Send to your CEO</button><p class="note" id="n-ceo" role="status"></p>
+      </form>`
+    loadChat()
+    return
+  }
   if (inside === 'lobby') {
     box.style.order = S?.ventures.length ? '' : '-1'
     box.innerHTML = `<h2>Start a venture <small>Your CEO plans it</small></h2>
@@ -121,13 +154,13 @@ function renderLive() {
       <div class="chips"><span class="chip">${o.staff} staff</span><span class="chip">${o.ventures.length} venture${o.ventures.length === 1 ? '' : 's'}</span><span class="chip">${o.pending_requests.length} waiting on you</span></div>
       <h2>Run the company</h2>
       <div class="chips"><button class="btn go" id="b-step">Run one step</button><button class="btn" id="b-report">Read the board report</button></div>
-      <h2>Run it from Claude Code <small>MCP</small></h2>
+      <details class="more"><summary>Run it from Claude Code instead (MCP)</summary>
       <p class="lede">Open Claude Code in this repo; <code>.mcp.json</code> connects it to the company. Then say:</p>
       <div class="code">You're the CEO of Corporate AI. Start a venture for a monthly Assam tea box for offices in Gurugram, plan it, run steps until the queue is empty, and give me the board report.</div>
       <h2>Its tools</h2>
       <div class="code">company_overview  org_chart  start_venture  plan_venture
 assign_task  list_tasks  run_step  read_work  set_task
-verify_contact  board_report</div>`)
+verify_contact  board_report</div></details>`)
     return
   }
   if (inside === 'lobby') {
@@ -225,6 +258,8 @@ function leave() { if (building) building.exit(); else show(null) }
 document.addEventListener('click', async (e) => {
   const lvl = e.target.closest('[data-level]')
   if (lvl) { e.preventDefault(); return enter(lvl.dataset.level) }
+  const qa = e.target.closest('[data-ask]')
+  if (qa) return askCEO(qa.dataset.ask)
   const pr = e.target.closest('[data-priority]')
   if (pr) { priority = pr.dataset.priority; document.querySelectorAll('[data-priority]').forEach(b => b.setAttribute('aria-pressed', b === pr)); return }
   const tb = e.target.closest('[data-tab]')
@@ -253,6 +288,11 @@ document.addEventListener('submit', async (e) => {
   e.preventDefault()
   const f = e.target, data = Object.fromEntries(new FormData(f)), btn = f.querySelector('.give')
   btn.disabled = true
+  if (f.id === 'f-ceo') {
+    const m = data.message.trim(); f.reset(); btn.disabled = false
+    if (m) await askCEO(m)
+    return
+  }
   if (f.id === 'f-venture') {
     $('#n-venture').textContent = 'The chief of staff is planning it…'
     const r = await api('/api/venture', data)
@@ -273,6 +313,7 @@ document.addEventListener('submit', async (e) => {
 $('#back').addEventListener('click', leave)
 $('#autopilot').addEventListener('change', (e) => api('/api/autopilot', { on: e.target.checked }).then(refresh))
 addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.closest('#f-ceo textarea')) { e.preventDefault(); e.target.form.requestSubmit(); return }
   if (e.target.closest('textarea,select,input:not([type=checkbox])') || $('#modal').open) return
   if (e.key === 'Escape' && inside) return leave()
   if (e.key === 'Enter' && !inside) return enter(focusId)
