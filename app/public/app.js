@@ -250,5 +250,9 @@ addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown') open(order[Math.max(0, i < 0 ? 0 : i - 1)])
 })
 
-refresh()
+// Deep links: /#lobby, /#finance, /#terrace open that floor.
+const fromHash = () => { const id = location.hash.slice(1); if (LEVELS.includes(id)) open(id) }
+addEventListener('hashchange', fromHash)
+
+refresh().then(fromHash)
 setInterval(refresh, 2000)
