@@ -7,6 +7,12 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js'
+
+// Staff model: "RobotExpressive" by Tomás Laulhé (Quaternius), CC0 1.0, from the three.js examples.
+const ROBOT_URL = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r170/examples/models/gltf/RobotExpressive/RobotExpressive.glb'
 
 export const LEVELS = ['lobby', 'finance', 'operations', 'marketing', 'sales', 'tech', 'support', 'hr', 'legal', 'office', 'terrace']
 const SIGN = { finance: 'FINANCE', operations: 'OPERATIONS', marketing: 'MARKETING', sales: 'SALES', tech: 'TECH', support: 'SUPPORT', hr: 'HR AND ADMIN', legal: 'LEGAL', office: 'CHIEF OF STAFF' }
@@ -61,27 +67,36 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   renderer.shadowMap.enabled = false
 
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color('#171a20')
-  scene.fog = new THREE.Fog('#171a20', 55, 210)
+  // Night sky: deep blue overhead, a warm city haze at the horizon, a few stars.
+  scene.background = canvasTex(16, 512, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h)
+    gr.addColorStop(0, '#05070d'); gr.addColorStop(0.55, '#0e1320'); gr.addColorStop(0.82, '#2a2a33'); gr.addColorStop(1, '#3b3530')
+    g.fillStyle = gr; g.fillRect(0, 0, w, h)
+  })
+  scene.fog = new THREE.Fog('#24252c', 70, 260)
+  // Image-based lighting so glass, metal, marble and water reflect something.
+  const pmrem = new THREE.PMREMGenerator(renderer)
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+  scene.environmentIntensity = 0.32
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 700)
 
-  scene.add(new THREE.HemisphereLight('#a9bad6', '#2a2520', 1.9))
+  scene.add(new THREE.HemisphereLight('#a9bad6', '#2a2520', 1.35))
   const moon = new THREE.DirectionalLight('#c8d6ff', 1.1); moon.position.set(-60, 120, 80); scene.add(moon)
   const fill = new THREE.DirectionalLight('#ffd8a8', 0.5); fill.position.set(80, 40, -40); scene.add(fill)
 
   const M = {
-    stone: new THREE.MeshStandardMaterial({ color: C.stone, roughness: 0.85 }),
+    stone: new THREE.MeshStandardMaterial({ color: C.stone, roughness: 0.62, metalness: 0.02 }),
     stoneDark: new THREE.MeshStandardMaterial({ color: C.stoneDark, roughness: 0.9 }),
     slab: new THREE.MeshStandardMaterial({ color: C.slab, roughness: 0.7 }),
-    glass: new THREE.MeshStandardMaterial({ color: '#2a4a63', metalness: 0.2, roughness: 0.05, transparent: true, opacity: 0.14, depthWrite: false }),
-    mullion: new THREE.MeshStandardMaterial({ color: '#1d2228', roughness: 0.6 }),
+    glass: new THREE.MeshPhysicalMaterial({ color: '#9ec3da', metalness: 0.1, roughness: 0.02, transparent: true, opacity: 0.16, envMapIntensity: 2.4, clearcoat: 1, depthWrite: false }),
+    mullion: new THREE.MeshStandardMaterial({ color: '#2a2f36', roughness: 0.32, metalness: 0.75 }),
     cyan: new THREE.MeshBasicMaterial({ color: C.cyan }),
     warm: new THREE.MeshBasicMaterial({ color: C.warm }),
     amber: new THREE.MeshBasicMaterial({ color: C.amber }),
-    floorIn: new THREE.MeshStandardMaterial({ color: '#a4aab2', emissive: '#3a4a58', emissiveIntensity: 0.6, roughness: 0.8 }),
-    ceiling: new THREE.MeshStandardMaterial({ color: '#d5d8dd', emissive: '#8a9aa8', emissiveIntensity: 0.5, roughness: 0.9 }),
+    floorIn: new THREE.MeshStandardMaterial({ color: '#a9aeb5', emissive: '#2c3a46', emissiveIntensity: 0.15, roughness: 0.3, metalness: 0.05 }),
+    ceiling: new THREE.MeshStandardMaterial({ color: '#b9bec5', emissive: '#8a9aa8', emissiveIntensity: 0.12, roughness: 0.9 }),
     light: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
-    desk: new THREE.MeshStandardMaterial({ color: '#e9ecef', roughness: 0.6 }),
+    desk: new THREE.MeshStandardMaterial({ color: '#d9dde2', roughness: 0.45 }),
     deskDark: new THREE.MeshStandardMaterial({ color: '#3a3f46', roughness: 0.7 }),
     chair: new THREE.MeshStandardMaterial({ color: '#2b2f35', roughness: 0.8 }),
     screen: new THREE.MeshBasicMaterial({ color: '#dff4ff' }),
@@ -95,8 +110,8 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     grass: new THREE.MeshStandardMaterial({ color: C.grass, roughness: 1 }),
     leaf: new THREE.MeshStandardMaterial({ color: C.leaf, roughness: 0.9, flatShading: true }),
     trunk: new THREE.MeshStandardMaterial({ color: '#5a4636', roughness: 1 }),
-    water: new THREE.MeshStandardMaterial({ color: '#6fc6e8', emissive: '#1d6f8f', emissiveIntensity: 0.6, roughness: 0.15 }),
-    road: new THREE.MeshStandardMaterial({ color: C.road, roughness: 0.95 }),
+    water: new THREE.MeshStandardMaterial({ color: '#4fb3dc', emissive: '#14627f', emissiveIntensity: 0.7, roughness: 0.04, metalness: 0.1, envMapIntensity: 2 }),
+    road: new THREE.MeshStandardMaterial({ color: C.road, roughness: 0.55, metalness: 0.05 }),
     pave: new THREE.MeshStandardMaterial({ color: '#8d9096', roughness: 0.9 }),
     dark: new THREE.MeshStandardMaterial({ color: '#1f2329', roughness: 0.6 }),
     lamp: new THREE.MeshBasicMaterial({ color: '#fff6e0' }),
@@ -121,6 +136,9 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     for (let i = -440; i < 440; i += 10) box(dash, along ? 3.2 : 0.3, 0.02, along ? 0.3 : 3.2, along ? i : x, 0.07, along ? z : i)
   }
   box(M.pave, PW + 18, 0.5, PD + 18, 0, 0.25, 0)                 // plaza
+  const kerb = new THREE.MeshStandardMaterial({ color: '#4a4d54', roughness: 0.8 })
+  for (const [x, z, w, d] of [[0, 24.5, 900, 1.2], [0, 39.5, 900, 1.2], [0, -26.5, 900, 1.2], [0, -41.5, 900, 1.2], [32.5, 0, 1.2, 900], [47.5, 0, 1.2, 900], [-34.5, 0, 1.2, 900], [-49.5, 0, 1.2, 900]]) box(kerb, w, 0.25, d, x, 0.12, z)
+  for (let k = 0; k < 7; k++) box(dash, 0.7, 0.03, 4.5, -10 + k * 1.3, 0.08, 32)     // zebra crossing in front of the entrance
   // Stairs up to the entrance
   for (let s = 0; s < 3; s++) box(M.slab, 14, 0.25, 1.2, -3, 0.62 + s * 0.25, PD / 2 + 3.4 - s * 1.0)
 
@@ -207,7 +225,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     for (let p = 0; p < 3; p++) {
       const x = -6.5 + p * 3, z = -2 + 0.85
       const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 4, 8), M.body); body.position.set(x, 1.05, z); g.add(body)
-      const head = new THREE.Mesh(G.sphere, M.head); head.scale.setScalar(0.42); head.position.set(x, 1.65, z); g.add(head)
+      const head = new THREE.Mesh(G.sphere, M.head); head.scale.setScalar(0.42); head.position.set(x, 1.65, z); g.add(head); head.userData.body = body
       heads.push(head)
     }
     busyHeads.push(heads)
@@ -222,6 +240,33 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   }
   for (let i = 1; i <= 9; i++) floors.push(buildFloor(i))
 
+  // Robot staff: three at their desks on every floor, and a receptionist in the lobby.
+  const mixers = []
+  const robots = []      // { floor, mixer, actions }
+  const loader = new GLTFLoader()
+  loader.load(ROBOT_URL, (gltf) => {
+    const proto = gltf.scene
+    const bb = new THREE.Box3().setFromObject(proto), scale = 1.55 / (bb.max.y - bb.min.y)
+    const clip = (name) => gltf.animations.find(a => a.name === name)
+    function place(parent, x, y, z, rot, anim, floor = null) {
+      const r = SkeletonUtils.clone(proto); r.scale.setScalar(scale); r.position.set(x, y, z); r.rotation.y = rot
+      r.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 1.2 } })
+      parent.add(r)
+      const mixer = new THREE.AnimationMixer(r)
+      const actions = { Idle: mixer.clipAction(clip('Idle')), Yes: mixer.clipAction(clip('Yes')), Wave: mixer.clipAction(clip('Wave')) }
+      actions[anim].play(); mixer.setTime(Math.random() * 3)
+      mixers.push(mixer); robots.push({ floor, mixer, actions, current: anim })
+      return r
+    }
+    floors.forEach((f) => {
+      f.heads.forEach(h => { h.visible = false; h.userData.body.visible = false })
+      for (let p = 0; p < 3; p++) place(f.group, -6.5 + p * 3, 0.22, -2 + 0.95, Math.PI, 'Idle', f.id)
+    })
+    const rec = place(lobby, -2, 0.18, -3.1, 0, 'Wave')
+    rec.userData.receptionist = true
+    applyBusy()
+  }, undefined, (e) => console.warn('robot model not loaded, keeping simple figures', e?.message || e))
+
   // Stone corner fins with warm light strips, running the height of the tower
   const towerTop = levelBase(10) + 0.5
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
@@ -232,6 +277,13 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   }
   // Vertical stone fins on the side faces
   for (const sx of [-1, 1]) for (let z = -3; z <= 3; z += 3) box(M.stoneDark, 0.5, towerTop - roofY, 0.5, sx * (TW / 2 + 0.3), roofY + (towerTop - roofY) / 2, z)
+
+  // Spandrel bands between floors and a lit crown at the top
+  const band = new THREE.MeshStandardMaterial({ color: '#30353d', roughness: 0.3, metalness: 0.8 })
+  for (let i = 1; i <= 9; i++) box(band, TW + 0.5, 0.45, TD + 0.5, 0, levelBase(i) + 0.5 + FH - 0.05, 0)
+  box(M.warm, TW + 4.6, 0.12, 0.12, 0, towerTop - 0.25, TD / 2 + 2.2); box(M.warm, TW + 4.6, 0.12, 0.12, 0, towerTop - 0.25, -TD / 2 - 2.2)
+  const blink = []
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const b3 = new THREE.Mesh(G.sphere, new THREE.MeshBasicMaterial({ color: '#ff2a1a' })); b3.scale.setScalar(0.35); b3.position.set(sx * (TW / 2 + 1.6), towerTop + 5.1, sz * (TD / 2 + 1.6)); scene.add(b3); blink.push(b3) }
 
   // ---------- Terrace with the JARVIS hologram ----------
   const terrace = new THREE.Group(); terrace.position.y = towerTop; scene.add(terrace)
@@ -258,18 +310,61 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   const ring3 = new THREE.Mesh(new THREE.TorusGeometry(7.2, 0.035, 8, 160), new THREE.MeshBasicMaterial({ color: '#7fdcff', transparent: true, opacity: 0.6 })); ring3.rotation.set(-0.3, 0, 0.2); holo.add(ring3)
   const terracePick = new THREE.Mesh(G.box, new THREE.MeshBasicMaterial({ visible: false })); terracePick.scale.set(TW + 4, 8, TD + 4); terracePick.position.y = 4; terracePick.userData.id = 'terrace'; terrace.add(terracePick)
 
-  // Lobby interior: reception desk, screens, a neon sign
-  const lobby = new THREE.Group(); lobby.position.set(-3, 0.5, PD / 2 - 6); scene.add(lobby)
-  cyl(M.dark, 1.6, 0.15, 0, 1.6, 0, lobby); cyl(M.dark, 0.5, 1.5, 0, 0.8, 0, lobby)
+  // Lobby interior: polished marble, a reception desk, a wall of wooden slats with the neon sign,
+  // screens, sofas, plants and pendant lights. Sits inside the hollow podium.
+  const lobby = new THREE.Group(); lobby.position.set(0, 0.5, 0); scene.add(lobby)
+  const marble = new THREE.MeshStandardMaterial({ roughness: 0.12, metalness: 0.05, envMapIntensity: 1.2, map: canvasTex(1024, 1024, (g, w, h) => {
+    g.fillStyle = '#e9e6e1'; g.fillRect(0, 0, w, h)
+    const r = rng(9)
+    for (let k = 0; k < 70; k++) { g.strokeStyle = `rgba(120,118,125,${0.08 + r() * 0.18})`; g.lineWidth = 0.6 + r() * 2.2; g.beginPath(); let x = r() * w, y = r() * h; g.moveTo(x, y); for (let j = 0; j < 8; j++) { x += (r() - 0.3) * 120; y += (r() - 0.5) * 90; g.lineTo(x, y) } g.stroke() }
+    g.strokeStyle = 'rgba(180,176,170,.55)'; g.lineWidth = 2; for (let k = 0; k <= 4; k++) { g.beginPath(); g.moveTo(k * w / 4, 0); g.lineTo(k * w / 4, h); g.moveTo(0, k * h / 4); g.lineTo(w, k * h / 4); g.stroke() }
+  }) })
+  marble.map.wrapS = marble.map.wrapT = THREE.RepeatWrapping; marble.map.repeat.set(4, 3)
+  box(marble, PW - 1.3, 0.12, PD - 1.3, 0, 0.12, 0, lobby)
+  // Slat wall behind reception
+  const walnut = new THREE.MeshStandardMaterial({ color: '#7a5233', roughness: 0.5 })
+  box(new THREE.MeshStandardMaterial({ color: '#1b1612', roughness: 0.8 }), 22, PH - 0.4, 0.3, -2, PH / 2 - 0.1, -6.2, lobby)
+  for (let x = -12.6; x <= 8.6; x += 0.42) box(walnut, 0.2, PH - 0.6, 0.18, x, PH / 2 - 0.1, -5.95, lobby)
+  box(M.warm, 21.6, 0.06, 0.1, -2, 0.35, -5.8, lobby); box(M.warm, 21.6, 0.06, 0.1, -2, PH - 0.55, -5.8, lobby)
   const ls = new THREE.Mesh(new THREE.PlaneGeometry(12, 2.2), new THREE.MeshBasicMaterial({ map: neonText('CORPORATE AI', { size: 140 }), transparent: true, depthWrite: false }))
-  ls.position.set(0, PH - 1.6, -5); lobby.add(ls)
+  ls.position.set(-2, PH - 2.0, -5.75); lobby.add(ls)
   const tag = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.5), new THREE.MeshBasicMaterial({ map: neonText('LED BY JARVIS   25 AI STAFF', { size: 70, color: '#e8f6ff' }), transparent: true }))
-  tag.position.set(0, PH - 2.7, -4.95); lobby.add(tag)
-  box(M.dark, 4, 2.6, 0.1, 6.5, 2.6, -4.9, lobby)
-  for (let b = 0; b < 8; b++) box(new THREE.MeshBasicMaterial({ color: '#9ff3d6' }), 0.25, 0.4 + ((b * 37) % 11) / 6, 0.05, 5.2 + b * 0.38, 1.6 + (0.4 + ((b * 37) % 11) / 6) / 2, -4.83, lobby)
-  box(M.dark, 3, 2, 0.1, -6.5, 2.4, -4.9, lobby)
-  for (let q = 0; q < 4; q++) box(new THREE.MeshBasicMaterial({ color: ['#ffd8a8', '#c7f0ff', '#ffe9c9', '#ffffff'][q] }), 1.3, 0.85, 0.05, -7.2 + (q % 2) * 1.4, 2.85 - Math.floor(q / 2) * 0.95, -4.83, lobby)
-  for (const x of [-5, 5]) box(M.desk, 3, 0.5, 1, x, 0.5, 2, lobby)
+  tag.position.set(-2, PH - 3.05, -5.74); lobby.add(tag)
+  // Reception desk: a long walnut counter with a white top and a glowing base line
+  box(walnut, 9, 1.1, 1.3, -2, 0.67, -2, lobby)
+  box(new THREE.MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.2 }), 9.4, 0.1, 1.6, -2, 1.27, -2, lobby)
+  box(M.cyan, 9, 0.05, 0.05, -2, 0.18, -1.33, lobby)
+  for (const dx of [-3, 0, 3]) box(M.screen, 0.6, 0.38, 0.03, -2 + dx, 1.55, -2.4, lobby)
+  // Screens on the side walls
+  box(M.dark, 4.2, 2.6, 0.12, 10.5, 3, -5.9, lobby)
+  for (let b = 0; b < 9; b++) { const h = 0.4 + ((b * 37) % 11) / 6; box(new THREE.MeshBasicMaterial({ color: b % 3 ? '#9ff3d6' : '#ffd28a' }), 0.26, h, 0.05, 9.0 + b * 0.38, 1.9 + h / 2, -5.82, lobby) }
+  box(M.dark, 3.4, 2.3, 0.12, -14.2, 3, -5.9, lobby)
+  for (let q = 0; q < 4; q++) box(new THREE.MeshBasicMaterial({ color: ['#ffd8a8', '#c7f0ff', '#ffe9c9', '#ffffff'][q] }), 1.45, 0.95, 0.05, -14.95 + (q % 2) * 1.55, 3.55 - Math.floor(q / 2) * 1.08, -5.82, lobby)
+  // Lounge: two sofas around low tables on rugs
+  const fabric = new THREE.MeshStandardMaterial({ color: '#3a3f47', roughness: 0.9 })
+  function sofa(x, z, rot) {
+    const s2 = new THREE.Group(); s2.position.set(x, 0, z); s2.rotation.y = rot; lobby.add(s2)
+    box(fabric, 3.2, 0.45, 1.1, 0, 0.45, 0, s2); box(fabric, 3.2, 0.8, 0.3, 0, 0.85, -0.45, s2)
+    box(fabric, 0.3, 0.65, 1.1, -1.6, 0.6, 0, s2); box(fabric, 0.3, 0.65, 1.1, 1.6, 0.6, 0, s2)
+  }
+  for (const [x, z] of [[-10, 4.5], [7, 4.5]]) {
+    box(new THREE.MeshStandardMaterial({ color: '#5b4a3e', roughness: 1 }), 5, 0.02, 4, x, 0.2, z + 1, lobby)
+    sofa(x, z, 0); sofa(x, z + 2.6, Math.PI)
+    cyl(new THREE.MeshStandardMaterial({ color: '#1d1f24', roughness: 0.3, metalness: 0.6 }), 0.7, 0.4, x, 0.4, z + 1.3, lobby)
+  }
+  // Plants in white pots
+  const pot = new THREE.MeshStandardMaterial({ color: '#eeeeea', roughness: 0.4 })
+  const leafDark = new THREE.MeshStandardMaterial({ color: '#2f6e43', roughness: 0.8, flatShading: true })
+  for (const [x, z, s3] of [[-15, -4.5, 1.2], [9.5, -4.5, 1.2], [-15, 9, 1], [14.5, 9, 1], [-7.5, -3.5, 0.8], [3.5, -3.5, 0.8], [14.5, -4.5, 1.1]]) {
+    cyl(pot, 0.45 * s3, 0.9 * s3, x, 0.6 * s3, z, lobby)
+    for (let k = 0; k < 6; k++) { const l = new THREE.Mesh(G.tree, leafDark); const a = k * 1.1; l.scale.set(0.35 * s3, 0.9 * s3, 0.35 * s3); l.position.set(x + Math.cos(a) * 0.35 * s3, (1.6 + (k % 3) * 0.45) * s3, z + Math.sin(a) * 0.35 * s3); l.rotation.set(Math.sin(a) * 0.5, a, Math.cos(a) * 0.5); lobby.add(l) }
+  }
+  // Pendant lights over the desk, round columns, and glass mullions across the entrance
+  for (let k = 0; k < 5; k++) { const x = -5.2 + k * 1.6; cyl(M.dark, 0.01, 1.6, x, PH - 1.1, -2, lobby); const b2 = new THREE.Mesh(G.sphere, M.lamp); b2.scale.setScalar(0.32); b2.position.set(x, PH - 1.95, -2); lobby.add(b2) }
+  for (const x of [-9, 5]) cyl(new THREE.MeshStandardMaterial({ color: '#f0eee9', roughness: 0.3 }), 0.45, PH - 0.4, x, PH / 2 - 0.1, 2.5, lobby)
+  for (let x = -12; x <= 6.01; x += 2.25) box(M.mullion, 0.08, PH - 1.3, 0.12, x, (PH - 1.3) / 2 + 0.1, PD / 2 - 0.05, lobby)
+  const lobbyLight = new THREE.PointLight('#ffd9a8', 22, 26, 1.6); lobbyLight.position.set(-2, PH - 1.2, 1); lobby.add(lobbyLight)
+  const lobbyLight2 = new THREE.PointLight('#cfe6ff', 8, 22, 1.6); lobbyLight2.position.set(-2, 2.5, -4); lobby.add(lobbyLight2)
   const lobbyPick = new THREE.Mesh(G.box, new THREE.MeshBasicMaterial({ visible: false })); lobbyPick.scale.set(PW, PH, PD); lobbyPick.position.set(0, 0.5 + PH / 2, 0); lobbyPick.userData.id = 'lobby'; scene.add(lobbyPick)
 
   // ---------- Trees, lamps, cars ----------
@@ -345,9 +440,9 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   }
 
   // ---------- Bloom ----------
-  const composer = new EffectComposer(renderer)
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }))
   composer.addPass(new RenderPass(scene, camera))
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.5, 0.82)
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.45, 0.45, 0.9)
   composer.addPass(bloom)
   composer.addPass(new OutputPass())
 
@@ -364,7 +459,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     return { pos: new THREE.Vector3(27, Math.max(7, y + lift), 47), look: new THREE.Vector3(-2, y + (i === 0 ? 3 : 0), 0) }
   }
   function insideShot(i) {
-    if (i === 0) return { pos: new THREE.Vector3(1.5, 3.4, PD / 2 + 1.5), look: new THREE.Vector3(1.5, 3.4, -PD / 2) }
+    if (i === 0) return { pos: new THREE.Vector3(1.6, 3.0, 11.3), look: new THREE.Vector3(1.6, 2.9, -6) }
     if (i === 10) return { pos: new THREE.Vector3(10, towerTop + 4, 20), look: new THREE.Vector3(0, towerTop + 7.5, 0) }
     const y = levelBase(i) + 0.5
     return { pos: new THREE.Vector3(-TW / 2 + 0.9, y + 2.2, TD / 2 - 0.8), look: new THREE.Vector3(TW / 2 - 2, y + 1.3, -TD / 2 + 1.5) }
@@ -377,14 +472,17 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     if (!inside) apply(overviewShot(focus))
     if (!silent) onFocus(LEVELS[focus])
   }
+  const roomLight = new THREE.PointLight('#ffe2b8', 0, 20, 1.5); scene.add(roomLight)
   function enter(id) {
     const i = LEVELS.indexOf(id); if (i < 0) return
+    if (i >= 1 && i <= 9) { roomLight.position.set(-2, levelBase(i) + 0.5 + FH - 0.6, 1); roomLight.intensity = 8 } else roomLight.intensity = 0
     focus = i; inside = id; placeFrame(i)
     frame.visible = frameFill.visible = false
     apply(insideShot(i))
     onEnter(id)
   }
   function exit() {
+    roomLight.intensity = 0
     inside = null; frame.visible = frameFill.visible = true
     apply(overviewShot(focus))
     onEnter(null)
@@ -417,9 +515,16 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     if (hit) { setFocus(LEVELS.indexOf(hit.object.userData.id)); if (!inside) enter(hit.object.userData.id) }
   })
 
-  function setBusy(map) {
-    floors.forEach((f, k) => { const b = !!map[f.id]; f.heads.forEach(h => { h.material = b ? M.headBusy : M.head }) })
+  let busyMap = {}
+  function applyBusy() {
+    floors.forEach((f) => { const b = !!busyMap[f.id]; f.heads.forEach(h => { h.material = b ? M.headBusy : M.head }) })
+    for (const r of robots) {
+      if (!r.floor) continue
+      const want = busyMap[r.floor] ? 'Yes' : 'Idle'
+      if (want !== r.current) { r.actions[r.current].fadeOut(0.4); r.actions[want].reset().fadeIn(0.4).play(); r.current = want }
+    }
   }
+  function setBusy(map) { busyMap = map || {}; applyBusy() }
 
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight
@@ -450,7 +555,9 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
         car.rotation.y = u.alongX ? (u.lane ? Math.PI : 0) : (u.lane === 2 ? -Math.PI / 2 : Math.PI / 2)
       }
       frameMat.opacity = 0.7 + Math.sin(t * 3) * 0.25
+      for (const b of blink) b.visible = Math.sin(t * 2.4) > 0.2
     }
+    for (const m of mixers) m.update(dt)
     composer.render()
   })
 
