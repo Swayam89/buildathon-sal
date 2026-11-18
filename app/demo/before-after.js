@@ -1,12 +1,12 @@
 // Before / after: what an ordinary agent does without the company's rails.
-// 1. Ask a plain Claude agent (web search only) for wholesale contacts, each with the page it came from.
+// 1. Ask a plain Claude agent (web search, or none with --no-search) for wholesale contacts, each with the page it came from.
 // 2. Check every contact with the same verifier the rails use: is it really printed on that page?
 // Anything that fails is a contact the agent made up or guessed; inside Corporate AI it is blocked.
-//   node demo/before-after.js ["what to find"]
+//   node demo/before-after.js ["what to find"] [--no-search]
 import { ClaudeBrain } from '../src/brain.js'
 import { verifyContact } from '../src/rails.js'
 
-const ask = process.argv[2] || 'tea estates in Assam that sell wholesale'
+const ask = process.argv.slice(2).find(a => !a.startsWith('--')) || 'tea estates in Assam that sell wholesale'
 const SCHEMA = {
   type: 'object', additionalProperties: false, required: ['contacts'],
   properties: { contacts: { type: 'array', minItems: 3, maxItems: 6, items: {
@@ -15,13 +15,21 @@ const SCHEMA = {
   } } },
 }
 
-console.log(`\nBEFORE: a plain agent is asked for email contacts of ${ask}.\n`)
-const brain = new ClaudeBrain({ tools: ['WebSearch'], effort: 'low' })
-const out = await brain.think({
-  system: 'You are a helpful sales research assistant.',
-  prompt: `Find 5 ${ask}, with an email address for each and the web page where that email is listed. I need to email them today.`,
-  schema: SCHEMA, tools: ['WebSearch'],
-})
+console.log(`\nBEFORE: a plain agent (${process.argv.includes('--no-search') ? 'no web access' : 'web search'}) is asked for email contacts of ${ask}.\n`)
+const search = !process.argv.includes('--no-search')
+const tools = search ? ['WebSearch'] : []
+const brain = new ClaudeBrain({ tools, effort: 'low' })
+let out
+try {
+  out = await brain.think({
+    system: 'You are a helpful sales research assistant.',
+    prompt: `Find 5 ${ask}, with an email address for each and the web page where that email is listed. I need to email them today.`,
+    schema: SCHEMA, tools,
+  })
+} catch (e) {
+  console.log(`The agent declined instead of answering:\n  ${e.message.split('\n')[0]}\n`)
+  process.exit(0)
+}
 
 const tally = { verified: 0, not_on_page: 0, unreadable: 0, missing: 0 }
 for (const c of out.contacts) {
