@@ -10,6 +10,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
 // Staff model: "RobotExpressive" by Tomás Laulhé (Quaternius), CC0 1.0, from the three.js examples.
 const ROBOT_URL = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r170/examples/models/gltf/RobotExpressive/RobotExpressive.glb'
@@ -45,6 +46,16 @@ function neonText(text, { color = '#bdf0ff', glow = '#4cc9ff', size = 120, width
   })
 }
 
+// Soft round glow for lamps and light pools.
+let GLOW = null
+function glowTex() {
+  return GLOW || (GLOW = canvasTex(128, 128, (g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2)
+    gr.addColorStop(0, 'rgba(255,240,215,1)'); gr.addColorStop(0.25, 'rgba(255,225,180,.55)'); gr.addColorStop(1, 'rgba(255,210,160,0)')
+    g.fillStyle = gr; g.fillRect(0, 0, w, h)
+  }))
+}
+
 // City windows: big panes, mostly warm white, some cool.
 function cityWindows(seed, cols, rows) {
   const r = rng(seed)
@@ -74,6 +85,12 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     g.fillStyle = gr; g.fillRect(0, 0, w, h)
   })
   scene.fog = new THREE.Fog('#24252c', 70, 260)
+  {
+    const r = rng(77), pos = []
+    for (let k = 0; k < 900; k++) { const a = r() * Math.PI * 2, e = 0.18 + r() * 1.3, d = 420; pos.push(Math.cos(a) * Math.cos(e) * d, Math.sin(e) * d, Math.sin(a) * Math.cos(e) * d) }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: '#dfe8ff', size: 1.1, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.8, depthWrite: false })))
+  }
   // Image-based lighting so glass, metal, marble and water reflect something.
   const pmrem = new THREE.PMREMGenerator(renderer)
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
@@ -159,7 +176,6 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   const lobbyGlass = box(M.glass, 18, PH - 1.2, 0.2, -3, 0.5 + (PH - 1.2) / 2 + 0.2, PD / 2 + 0.11, podium)
   lobbyGlass.renderOrder = 2
   // Cut-out look: a dark recess behind the glass
-  box(M.dark, 17.6, PH - 1.4, 0.3, -3, 0.5 + (PH - 1.4) / 2 + 0.2, PD / 2 - 0.2, podium).visible = false
   // Entrance columns
   for (const x of [-12.5, 6.5]) box(M.stone, 2.2, PH, 2.2, x, 0.5 + PH / 2, PD / 2 + 0.6, podium)
   // Canopy with neon sign
@@ -173,6 +189,15 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     box(M.slab, 7.5, 0.6, 4.2, x, 0.8, PD / 2 + 5.5, podium)
     box(M.water, 7, 0.1, 3.7, x, 1.12, PD / 2 + 5.5, podium)
     for (let j = 0; j < 4; j++) { cyl(M.lamp, 0.05, 1.2, x - 2.6 + j * 1.75, 1.7, PD / 2 + 5.5, podium); const s = new THREE.Mesh(G.sphere, M.lamp); s.scale.setScalar(0.22); s.position.set(x - 2.6 + j * 1.75, 2.35, PD / 2 + 5.5); podium.add(s) }
+  }
+  // Fountain jets: a few hundred drops rising and falling, reset each loop
+  const jets = []
+  for (const fx of [-14, 8]) for (let j = 0; j < 4; j++) {
+    const n = 60, pos = new Float32Array(n * 3), seeds = new Float32Array(n)
+    for (let q = 0; q < n; q++) seeds[q] = Math.random()
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: '#d8f4ff', size: 0.09, transparent: true, opacity: 0.85, depthWrite: false }))
+    scene.add(pts); jets.push({ geo, seeds, x: fx - 2.6 + j * 1.75, z: PD / 2 + 5.5 })
   }
   // Monument sign
   box(M.stone, 6, 1.8, 1.2, -19, 1.4, PD / 2 + 8)
@@ -215,7 +240,16 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
       box(M.desk, 2.2, 0.08, 1, x, 1.0, z, g)
       box(M.deskDark, 0.08, 1, 0.9, x - 1.05, 0.5, z, g); box(M.deskDark, 0.08, 1, 0.9, x + 1.05, 0.5, z, g)
       box(k % 2 ? M.screenWarm : M.screen, 0.7, 0.45, 0.04, x - 0.4, 1.35, z - 0.3, g); box(M.screen, 0.7, 0.45, 0.04, x + 0.4, 1.35, z - 0.3, g)
-      box(M.chair, 0.6, 0.1, 0.6, x, 0.6, z + 0.9, g); box(M.chair, 0.6, 0.8, 0.08, x, 1.0, z + 1.2, g)
+      if (!(row === 0 && k < 3)) { box(M.chair, 0.6, 0.1, 0.6, x, 0.6, z + 0.9, g); box(M.chair, 0.6, 0.8, 0.08, x, 1.0, z + 1.2, g) }
+    }
+    // glass meeting room around the table, and plants by the windows
+    const mr = new THREE.Group(); mr.position.set(3.5, 0, 4.2); g.add(mr)
+    for (const [w, d, x, z] of [[6.4, 0.06, 0, -1.9], [0.06, 3.8, -3.2, 0], [0.06, 3.8, 3.2, 0]]) { const pane = box(M.glass, w, FH - 0.4, d, x, FH / 2, z, mr); pane.renderOrder = 2 }
+    for (const [x, z] of [[-3.2, -1.9], [3.2, -1.9], [0, -1.9]]) box(M.mullion, 0.08, FH - 0.4, 0.08, x, FH / 2, z, mr)
+    box(M.cyan, 6.4, 0.04, 0.04, 0, FH - 0.5, -1.9, mr)
+    for (const [x, z] of [[-7.6, 5.2], [7.6, -5], [-7.6, -5]]) {
+      cyl(M.desk, 0.3, 0.6, x, 0.5, z, g)
+      for (let k2 = 0; k2 < 5; k2++) { const l = new THREE.Mesh(G.tree, M.leaf); const a = k2 * 1.3; l.scale.set(0.25, 0.6, 0.25); l.position.set(x + Math.cos(a) * 0.22, 1.1 + (k2 % 3) * 0.3, z + Math.sin(a) * 0.22); l.rotation.set(Math.sin(a) * 0.5, a, Math.cos(a) * 0.5); g.add(l) }
     }
     // meeting table at the front
     box(M.table, 5, 0.12, 1.8, 3.5, 1.0, 4.2, g)
@@ -224,8 +258,8 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     const heads = []
     for (let p = 0; p < 3; p++) {
       const x = -6.5 + p * 3, z = -2 + 0.85
-      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 4, 8), M.body); body.position.set(x, 1.05, z); g.add(body)
-      const head = new THREE.Mesh(G.sphere, M.head); head.scale.setScalar(0.42); head.position.set(x, 1.65, z); g.add(head); head.userData.body = body
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 4, 8), M.body); body.position.set(x, 1.05, z); g.add(body); body.userData.keep = true
+      const head = new THREE.Mesh(G.sphere, M.head); head.scale.setScalar(0.42); head.position.set(x, 1.65, z); g.add(head); head.userData.body = body; head.userData.keep = true
       heads.push(head)
     }
     busyHeads.push(heads)
@@ -242,6 +276,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
 
   // Robot staff: three at their desks on every floor, and a receptionist in the lobby.
   const mixers = []
+  const walkers = []
   const robots = []      // { floor, mixer, actions }
   const loader = new GLTFLoader()
   loader.load(ROBOT_URL, (gltf) => {
@@ -253,7 +288,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
       r.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.envMapIntensity = 1.2 } })
       parent.add(r)
       const mixer = new THREE.AnimationMixer(r)
-      const actions = { Idle: mixer.clipAction(clip('Idle')), Yes: mixer.clipAction(clip('Yes')), Wave: mixer.clipAction(clip('Wave')) }
+      const actions = { Idle: mixer.clipAction(clip('Idle')), Yes: mixer.clipAction(clip('Yes')), Wave: mixer.clipAction(clip('Wave')), Walking: mixer.clipAction(clip('Walking')) }
       actions[anim].play(); mixer.setTime(Math.random() * 3)
       mixers.push(mixer); robots.push({ floor, mixer, actions, current: anim })
       return r
@@ -262,6 +297,10 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
       f.heads.forEach(h => { h.visible = false; h.userData.body.visible = false })
       for (let p = 0; p < 3; p++) place(f.group, -6.5 + p * 3, 0.22, -2 + 0.95, Math.PI, 'Idle', f.id)
     })
+    for (const [cx, cz, rx, rz, speed, off] of [[-3, PD / 2 + 7.5, 11, 1.6, 0.16, 0], [-3, PD / 2 + 7.5, 11, 1.6, 0.16, 3.1], [PW / 2 + 5.5, 0, 1.8, 10, -0.14, 1.2], [-PW / 2 - 4.5, 0, 1.5, 9, 0.12, 2]]) {
+      const w = place(scene, cx, 0.52, cz, 0, 'Walking')
+      walkers.push({ obj: w, cx, cz, rx, rz, speed, off })
+    }
     const rec = place(lobby, -2, 0.18, -3.1, 0, 'Wave')
     rec.userData.receptionist = true
     applyBusy()
@@ -283,7 +322,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   for (let i = 1; i <= 9; i++) box(band, TW + 0.5, 0.45, TD + 0.5, 0, levelBase(i) + 0.5 + FH - 0.05, 0)
   box(M.warm, TW + 4.6, 0.12, 0.12, 0, towerTop - 0.25, TD / 2 + 2.2); box(M.warm, TW + 4.6, 0.12, 0.12, 0, towerTop - 0.25, -TD / 2 - 2.2)
   const blink = []
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const b3 = new THREE.Mesh(G.sphere, new THREE.MeshBasicMaterial({ color: '#ff2a1a' })); b3.scale.setScalar(0.35); b3.position.set(sx * (TW / 2 + 1.6), towerTop + 5.1, sz * (TD / 2 + 1.6)); scene.add(b3); blink.push(b3) }
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const b3 = new THREE.Mesh(G.sphere, new THREE.MeshBasicMaterial({ color: '#ff2a1a' })); b3.scale.setScalar(0.35); b3.position.set(sx * (TW / 2 + 1.6), towerTop + 5.1, sz * (TD / 2 + 1.6)); b3.userData.keep = true; scene.add(b3); blink.push(b3) }
 
   // ---------- Terrace with the JARVIS hologram ----------
   const terrace = new THREE.Group(); terrace.position.y = towerTop; scene.add(terrace)
@@ -292,7 +331,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   for (let x = -TW / 2 - 1.5; x <= TW / 2 + 1.5; x += 0.9) { box(M.stone, 0.35, 2.4, 0.35, x, 1.4, TD / 2 + 1.8, terrace); box(M.stone, 0.35, 2.4, 0.35, x, 1.4, -TD / 2 - 1.8, terrace) }
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.2, 4), M.stone); p.position.set(sx * (TW / 2 + 1.6), 3.4, sz * (TD / 2 + 1.6)); terrace.add(p); const l = new THREE.Mesh(G.sphere, M.lamp); l.scale.setScalar(0.35); l.position.set(sx * (TW / 2 + 1.6), 4.6, sz * (TD / 2 + 1.6)); terrace.add(l) }
   // Hologram: a head made of points, a bright core and two orbit rings
-  const holo = new THREE.Group(); holo.position.set(0, 7.5, 0); terrace.add(holo)
+  const holo = new THREE.Group(); holo.position.set(0, 7.5, 0); terrace.add(holo); holo.userData.keep = true
   const pts = [], pr = rng(42)
   for (let n = 0; n < 2600; n++) {
     const u = pr() * Math.PI * 2, v = Math.acos(2 * pr() - 1)
@@ -372,9 +411,27 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     cyl(M.trunk, 0.15 * s, 1.8 * s, x, 0.9 * s + 0.5, z)
     for (const [dx, dy, dz, r] of [[0, 2.6, 0, 1.2], [0.6, 2.2, 0.3, 0.9], [-0.5, 2.3, -0.3, 0.9], [0, 3.3, 0, 0.8]]) { const t = new THREE.Mesh(G.tree, M.leaf); t.scale.setScalar(r * s); t.position.set(x + dx * s, dy * s + 0.5, z + dz * s); scene.add(t) }
   }
-  function palm(x, z, h = 6) {
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, h, 6), M.trunk); trunk.position.set(x, h / 2 + 0.5, z); trunk.rotation.z = 0.05; scene.add(trunk)
-    for (let k = 0; k < 7; k++) { const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.35, 2.6, 4), M.leaf); const a = (k / 7) * Math.PI * 2; leaf.position.set(x + Math.cos(a) * 1.1, h + 0.3, z + Math.sin(a) * 1.1); leaf.rotation.set(Math.sin(a) * 1.3, 0, -Math.cos(a) * 1.3); scene.add(leaf) }
+  const frondMat = new THREE.MeshStandardMaterial({ color: '#2f8a4f', roughness: 0.75, side: THREE.DoubleSide, flatShading: true })
+  const ringMat = new THREE.MeshStandardMaterial({ color: '#6b5440', roughness: 1 })
+  function palm(x, z, h = 6, lean = 0.12) {
+    const segs = 7, top = new THREE.Vector3()
+    for (let k = 0; k < segs; k++) {
+      const t = k / segs, y = 0.5 + t * h, bend = lean * t * t * h
+      const seg = new THREE.Mesh(G.cyl, k % 2 ? ringMat : M.trunk); seg.scale.set(0.34 - t * 0.12, h / segs + 0.02, 0.34 - t * 0.12)
+      seg.position.set(x + bend, y + h / segs / 2, z); seg.rotation.z = -lean * t * 2; scene.add(seg)
+      top.set(x + bend, y + h / segs, z)
+    }
+    // fronds: each a chain of flat leaves arching out and down
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * Math.PI * 2 + x
+      for (let j = 0; j < 5; j++) {
+        const len = 0.8, out = 0.3 + j * 0.6, drop = j * j * 0.11
+        const leaf = new THREE.Mesh(G.box, frondMat); leaf.scale.set(len, 0.03, 0.62 - j * 0.09)
+        leaf.position.set(top.x + Math.cos(a) * out, top.y + 0.25 - drop, top.z + Math.sin(a) * out)
+        leaf.rotation.set(0, -a, -0.15 - j * 0.32); scene.add(leaf)
+      }
+    }
+    const crown = new THREE.Mesh(G.sphere, M.trunk); crown.scale.setScalar(0.5); crown.position.copy(top); scene.add(crown)
   }
   function conifer(x, z, s = 1) {
     cyl(M.trunk, 0.15, 1.2, x, 1.1, z)
@@ -390,11 +447,14 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     cyl(M.dark, 0.08, 6, k * 14, 3.5, z)
     box(M.dark, 1.6, 0.12, 0.3, k * 14 + 0.7, 6.4, z)
     const l = box(M.lamp, 0.9, 0.08, 0.35, k * 14 + 1.2, 6.32, z); lampGlow.push(l)
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: '#ffe2b0', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })); halo.scale.set(3.2, 3.2, 1); halo.position.set(k * 14 + 1.2, 6.1, z); scene.add(halo)
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), new THREE.MeshBasicMaterial({ map: glowTex(), color: '#ffcf8f', transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending }))
+    pool.rotation.x = -Math.PI / 2; pool.position.set(k * 14 + 1.2, 0.09, z + (z > 0 ? 3 : -3)); scene.add(pool)
   }
   const cars = []
   const carMat = [new THREE.MeshStandardMaterial({ color: '#b9bec6', roughness: 0.5 }), new THREE.MeshStandardMaterial({ color: '#3d4450', roughness: 0.5 }), new THREE.MeshStandardMaterial({ color: '#7d8590', roughness: 0.5 })]
   for (let k = 0; k < 8; k++) {
-    const car = new THREE.Group()
+    const car = new THREE.Group(); car.userData.keep = true
     box(carMat[k % 3], 4.2, 1.1, 1.9, 0, 0.9, 0, car); box(carMat[k % 3], 2.4, 0.8, 1.7, -0.3, 1.8, 0, car)
     box(M.lamp, 0.1, 0.25, 0.4, 2.12, 0.95, 0.6, car); box(M.lamp, 0.1, 0.25, 0.4, 2.12, 0.95, -0.6, car)
     box(new THREE.MeshBasicMaterial({ color: '#ff4b3a' }), 0.1, 0.2, 0.4, -2.12, 0.95, 0.6, car); box(new THREE.MeshBasicMaterial({ color: '#ff4b3a' }), 0.1, 0.2, 0.4, -2.12, 0.95, -0.6, car)
@@ -418,6 +478,29 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     const b = new THREE.Mesh(G.box, [side, side, new THREE.MeshStandardMaterial({ color: '#25282e' }), side, side, side])
     b.scale.set(w, h, d); b.position.set(x, h / 2, z); scene.add(b)
   }
+
+  // ---------- Merge everything static into one mesh per material (thousands of draw calls -> a few hundred) ----------
+  function bake() {
+    scene.updateMatrixWorld(true)
+    const groups = new Map(), victims = []
+    scene.traverse(o => {
+      if (!o.isMesh || o.isSkinnedMesh || !o.material || Array.isArray(o.material) || o.material.visible === false) return
+      for (let q = o; q; q = q.parent) if (q.userData.keep || !q.visible) return
+      let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()
+      for (const name of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv'].includes(name)) geo.deleteAttribute(name)
+      if (!geo.attributes.normal || !geo.attributes.uv) return
+      geo.applyMatrix4(o.matrixWorld)
+      const key = o.material.uuid
+      if (!groups.has(key)) groups.set(key, { mat: o.material, geos: [], ro: 0 })
+      const gg = groups.get(key); gg.geos.push(geo); gg.ro = Math.max(gg.ro, o.renderOrder); victims.push(o)
+    })
+    for (const o of victims) o.parent.remove(o)
+    for (const { mat, geos, ro } of groups.values()) {
+      const merged = mergeGeometries(geos, false); if (!merged) continue
+      const m = new THREE.Mesh(merged, mat); m.renderOrder = ro; m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m)
+    }
+  }
+  bake()
 
   // ---------- Focus frame ----------
   const frameMat = new THREE.MeshBasicMaterial({ color: C.amber, transparent: true, opacity: 0.95 })
@@ -556,6 +639,19 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
       }
       frameMat.opacity = 0.7 + Math.sin(t * 3) * 0.25
       for (const b of blink) b.visible = Math.sin(t * 2.4) > 0.2
+      for (const jet of jets) {
+        const a = jet.geo.attributes.position.array
+        for (let q = 0; q < jet.seeds.length; q++) {
+          const ph = (t * 0.9 + jet.seeds[q]) % 1, ang = jet.seeds[q] * 40
+          a[q * 3] = jet.x + Math.cos(ang) * ph * 0.35; a[q * 3 + 1] = 1.2 + ph * 2.6 - ph * ph * 2.4; a[q * 3 + 2] = jet.z + Math.sin(ang) * ph * 0.35
+        }
+        jet.geo.attributes.position.needsUpdate = true
+      }
+      for (const w of walkers) {
+        const u = (t * w.speed + w.off) % (Math.PI * 2)
+        w.obj.position.set(w.cx + Math.cos(u) * w.rx, 0.52, w.cz + Math.sin(u) * w.rz)
+        w.obj.rotation.y = Math.atan2(-Math.sin(u) * w.rx, Math.cos(u) * w.rz) * (w.speed > 0 ? 1 : -1) + (w.speed > 0 ? 0 : Math.PI)
+      }
     }
     for (const m of mixers) m.update(dt)
     composer.render()
