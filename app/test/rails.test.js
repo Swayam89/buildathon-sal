@@ -15,6 +15,16 @@ test('a contact is accepted only when it is printed on the cited page', async ()
   assert.equal((await verifyContact({ email: 'a@b.example', source_url: 'file:///etc/passwd' }, { fetchImpl })).ok, false)
 })
 
+test('Cloudflare-protected emails are decoded; hidden text and comments never count', async () => {
+  // "a@b.co" encoded with key 0x42
+  const hex = '42' + [...'a@b.co'].map(c => (c.charCodeAt(0) ^ 0x42).toString(16).padStart(2, '0')).join('')
+  const fetchImpl = page(`<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="${hex}">[email&#160;protected]</a>
+    <p style="display: none">ghost@hidden.example</p><!-- old@comment.example -->`)
+  assert.equal((await verifyContact({ email: 'a@b.co', source_url: 'https://b.example' }, { fetchImpl })).ok, true)
+  assert.equal((await verifyContact({ email: 'ghost@hidden.example', source_url: 'https://b.example' }, { fetchImpl })).kind, 'not_on_page')
+  assert.equal((await verifyContact({ email: 'old@comment.example', source_url: 'https://b.example' }, { fetchImpl })).ok, false)
+})
+
 test('a page that fails to load never verifies anything', async () => {
   const r = await verifyContact({ email: 'x@y.example', source_url: 'https://down.example' }, { fetchImpl: async () => ({ ok: false, status: 503 }) })
   assert.equal(r.ok, false)

@@ -37,36 +37,57 @@ export function phonesIn(text) {
   return [...found]
 }
 
-// Turn HTML into plain text so hidden markup can't smuggle in addresses.
+// Cloudflare "email protection" hides addresses as hex XOR-ed with the first byte.
+export function decodeCfEmail(hex) {
+  const key = parseInt(hex.slice(0, 2), 16)
+  let out = ''
+  for (let i = 2; i < hex.length; i += 2) out += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16) ^ key)
+  return out
+}
+
+// Turn HTML into plain text so hidden markup can't smuggle in addresses:
+// comments, scripts, styles and hidden elements are dropped; mailto/tel links and
+// Cloudflare-protected emails are turned back into visible text.
 export const pageText = (html) => String(html)
-  .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<!--[\s\S]*?-->/gi, ' ')
-  .replace(/<a[^>]+href="(mailto:|tel:)([^"]+)"[^>]*>/gi, ' $2 ')
-  .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ')
+  // End tags like browsers read them: "</script" runs to the next ">", even when the site forgot it.
+  .replace(/<script\b[\s\S]*?<\/script[^>]*>|<style\b[\s\S]*?<\/style[^>]*>|<!--[\s\S]*?-->/gi, ' ')
+  .replace(/<(\w+)[^>]*(style\s*=\s*["'][^"']*display\s*:\s*none|\shidden[\s>])[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+  .replace(/<[^>]*data-cfemail\s*=\s*["']([0-9a-f]+)["'][^>]*>/gi, (_, hex) => ` ${decodeCfEmail(hex)} `)
+  .replace(/<a\b[^>]*href\s*=\s*["'](?:mailto:|tel:)([^"'?]+)[^>]*>/gi, ' $1 ')
+  .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&#64;|&commat;/g, '@').replace(/&amp;/g, '&').replace(/\s+/g, ' ')
+
+export class Unreadable extends Error {}
 
 // Fetch a page once per check, with a timeout. fetchImpl is injectable for tests and the offline demo.
+// A normal browser user agent: many small-business sites stall or serve a bot check to anything else.
 export async function fetchPage(url, fetchImpl = fetch) {
-  if (!/^https?:\/\//i.test(String(url))) throw new Error('source must be an http(s) URL')
-  const res = await fetchImpl(url, { signal: AbortSignal.timeout(10000), headers: { 'user-agent': 'corporate-ai-verifier/0.1' } })
-  if (!res.ok) throw new Error(`source returned HTTP ${res.status}`)
+  if (!/^https?:\/\//i.test(String(url))) throw new Unreadable('source must be an http(s) URL')
+  let res
+  try {
+    res = await fetchImpl(url, { signal: AbortSignal.timeout(15000), redirect: 'follow', headers: {
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+      accept: 'text/html,application/xhtml+xml', 'accept-language': 'en-IN,en;q=0.9' } })
+  } catch (e) { throw new Unreadable(e.name === 'TimeoutError' || /abort/i.test(e.message) ? 'the page took too long to load' : e.message) }
+  if (!res.ok) throw new Unreadable(`source returned HTTP ${res.status}`)
   return pageText(await res.text())
 }
 
 // Check one contact against its source page. Returns { ok, reason, evidence }.
 export async function verifyContact({ email = '', phone = '', source_url = '' }, { fetchImpl = fetch } = {}) {
-  if (!email && !phone) return { ok: false, reason: 'no email or phone given' }
-  if (!source_url) return { ok: false, reason: 'no source page given: contacts must come from a page that shows them' }
+  if (!email && !phone) return { ok: false, reason: 'no email or phone given', kind: 'missing' }
+  if (!source_url) return { ok: false, reason: 'no source page given: contacts must come from a page that shows them', kind: 'missing' }
   let text
-  try { text = await fetchPage(source_url, fetchImpl) } catch (e) { return { ok: false, reason: `could not read the source page (${e.message})` } }
+  try { text = await fetchPage(source_url, fetchImpl) } catch (e) { return { ok: false, reason: `could not read the source page (${e.message}), so it can't be verified`, kind: 'unreadable' } }
   const around = (needle) => {
     const i = text.toLowerCase().indexOf(needle.toLowerCase())
     return i < 0 ? '' : text.slice(Math.max(0, i - 60), i + needle.length + 60).trim()
   }
   if (email) {
-    if (!emailsIn(text).includes(email.toLowerCase())) return { ok: false, reason: `${email} is not on ${source_url}` }
+    if (!emailsIn(text).includes(email.toLowerCase())) return { ok: false, reason: `${email} is not on ${source_url}`, kind: 'not_on_page' }
   }
   if (phone) {
     const k = phoneKey(phone)
-    if (!phonesIn(text).some(p => p === k || p.endsWith(k) || k.endsWith(p))) return { ok: false, reason: `${phone} is not on ${source_url}` }
+    if (!phonesIn(text).some(p => p === k || p.endsWith(k) || k.endsWith(p))) return { ok: false, reason: `${phone} is not on ${source_url}`, kind: 'not_on_page' }
   }
   return { ok: true, reason: 'found on the source page', evidence: around(email || String(phone).slice(-5)) }
 }
