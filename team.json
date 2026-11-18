@@ -1,9 +1,11 @@
 {
-  "team_name": "CHANGE_ME",
-  "project_title": "CHANGE_ME",
-  "one_liner": "CHANGE_ME: one sentence about what you're building",
-  "track": "CHANGE_ME: physical-world | ai-agents | area-of-expertise",
+  "team_name": "SAL",
+  "project_title": "Corporate AI: an AI company run by JARVIS",
+  "one_liner": "JARVIS, a CEO agent, runs a company of AI staff through an MCP tool that gives agents an org chart, a shared task board and hard safety rails.",
+  "track": "ai-agents",
   "members": [
-    { "name": "CHANGE_ME", "github": "CHANGE_ME" }
+    { "name": "Swayam Jain", "github": "Swayam89" },
+    { "name": "Aryan Bhatter", "github": "pending" },
+    { "name": "Laksh Pradhwani", "github": "pending" }
   ]
 }
