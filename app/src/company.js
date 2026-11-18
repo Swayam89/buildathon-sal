@@ -263,11 +263,11 @@ export class Company {
         v.plan && `Plan: ${v.plan}`,
         `\n## Done (${done.length})`, ...done.map(t => `- ${t.id} ${t.title} (${this.nameOf(t.assignee)}): ${t.output?.summary || ''}`),
         `\n## In progress (${open.length})`, ...open.map(t => `- ${t.id} ${t.title} (${this.nameOf(t.assignee)}, ${t.priority})`),
-        stuck.length && `\n## Stuck (${stuck.length})`, ...stuck.map(t => `- ${t.id} ${t.title}: ${t.status}`),
+        stuck.length ? `\n## Stuck (${stuck.length})` : null, ...stuck.map(t => `- ${t.id} ${t.title}: ${t.status}`),
         `\n## Needs your decision (${reqs.length})`, ...reqs.map(r => `- ${r.id} ${r.kind === 'spend' ? `₹${r.amount_inr} to ${r.payee}` : 'decision'}: ${r.reason} (asked by ${this.nameOf(r.by)})`),
         `\n## Outreach drafts (${drafts.length})`, ...drafts.map(m => `- ${m.channel} to ${m.to_name} <${m.to}>, verified on ${m.source_url}`),
         `\n## Rails (${rails.length} blocked)`, ...rails.slice(-8).map(e => `- ${e.text}`),
-      ].filter(x => x !== false && x !== undefined && x !== '').join('\n')
+      ].filter(x => typeof x === 'string' && x !== '').join('\n')
     }).join('\n\n')
   }
 }
