@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corporate AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div>
+        <h1>Corporate AI</h1>
+        <p class="sub">An AI company of 25 staff, run by <b>JARVIS</b> as CEO</p>
+      </div>
+    </div>
+    <div class="controls">
+      <span id="brain" class="pill"></span>
+      <span id="busy" class="pill busy" hidden></span>
+      <button id="step" class="btn">Run one step</button>
+      <label class="switch"><input type="checkbox" id="autopilot"><span>Autopilot</span></label>
+      <button id="report" class="btn ghost">Board report</button>
+    </div>
+  </header>
+
+  <section class="venture-bar">
+    <form id="venture-form">
+      <input id="idea" placeholder="Business idea, e.g. Monthly Assam tea box for office teams" required>
+      <input id="problem" placeholder="Who has the problem, and why?">
+      <button class="btn amber">Start venture</button>
+    </form>
+    <div id="ventures" class="ventures"></div>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <main class="grid">
+    <section class="panel building">
+      <h2>The building</h2>
+      <div id="floors"></div>
+    </section>
+
+    <section class="panel board">
+      <h2>Task board</h2>
+      <div class="columns">
+        <div class="col"><h3>To do</h3><div id="col-todo"></div></div>
+        <div class="col"><h3>Working</h3><div id="col-doing"></div></div>
+        <div class="col"><h3>Done</h3><div id="col-done"></div></div>
+        <div class="col"><h3>Stuck</h3><div id="col-stuck"></div></div>
+      </div>
+    </section>
+
+    <section class="side">
+      <div class="panel owner">
+        <h2>Needs your decision</h2>
+        <p class="hint">The company never pays. JARVIS can't approve money either. Only you can.</p>
+        <div id="requests"></div>
+      </div>
+      <div class="panel rails">
+        <h2>Rails <span id="rails-count" class="count"></span></h2>
+        <p class="hint">What the code stopped agents from doing.</p>
+        <div id="rails"></div>
+      </div>
+      <div class="panel outreach">
+        <h2>Outreach drafts</h2>
+        <p class="hint">Every contact is verified on the page it came from.</p>
+        <div id="messages"></div>
+      </div>
+    </section>
+  </main>
+
+  <section class="panel log">
+    <h2>Activity</h2>
+    <ol id="events"></ol>
+  </section>
+
+  <dialog id="modal">
+    <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+    <div id="modal-body"></div>
+  </dialog>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
