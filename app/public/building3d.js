@@ -93,7 +93,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     cyan: new THREE.MeshBasicMaterial({ color: C.cyan }),
     warm: new THREE.MeshBasicMaterial({ color: C.warm }),
     amber: new THREE.MeshBasicMaterial({ color: C.amber }),
-    floorIn: new THREE.MeshStandardMaterial({ color: '#a9aeb5', emissive: '#2c3a46', emissiveIntensity: 0.15, roughness: 0.3, metalness: 0.05 }),
+    floorIn: new THREE.MeshStandardMaterial({ color: '#a9aeb5', emissive: '#2c3a46', emissiveIntensity: 0.15, roughness: 0.6, metalness: 0.05 }),
     ceiling: new THREE.MeshStandardMaterial({ color: '#b9bec5', emissive: '#8a9aa8', emissiveIntensity: 0.12, roughness: 0.9 }),
     light: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
     desk: new THREE.MeshStandardMaterial({ color: '#d9dde2', roughness: 0.45 }),
