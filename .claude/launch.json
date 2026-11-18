@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "corporate-ai-demo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["app/src/server.js"],
+      "env": { "CORP_BRAIN": "scripted", "CORP_DATA": "/tmp/corp-ai-demo/company.json", "AUTOPILOT_MS": "2500" },
+      "port": 4700
+    }
+  ]
+}
