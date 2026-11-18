@@ -126,7 +126,17 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
 
   // ---------- Podium (lobby) ----------
   const podium = new THREE.Group(); scene.add(podium)
-  box(M.stone, PW, PH, PD, 0, 0.5 + PH / 2, 0, podium)
+  // Hollow podium: back and side walls, and a front with a tall glass opening into the lobby
+  const wy = 0.5 + PH / 2, wt = 0.6
+  box(M.stone, PW, PH, wt, 0, wy, -PD / 2 + wt / 2, podium)
+  box(M.stone, wt, PH, PD, -PW / 2 + wt / 2, wy, 0, podium)
+  box(M.stone, wt, PH, PD, PW / 2 - wt / 2, wy, 0, podium)
+  box(M.stone, PW / 2 - 12, PH, wt, (-PW / 2 - 12) / 2, wy, PD / 2 - wt / 2, podium)
+  box(M.stone, PW / 2 - 6, PH, wt, (PW / 2 + 6) / 2, wy, PD / 2 - wt / 2, podium)
+  box(M.stone, 18, 1.2, wt, -3, 0.5 + PH - 0.6, PD / 2 - wt / 2, podium)
+  box(new THREE.MeshStandardMaterial({ color: '#c8cbd0', roughness: 0.4, emissive: '#3a4652', emissiveIntensity: 0.5 }), PW - 1.2, 0.1, PD - 1.2, 0, 0.56, 0, podium)
+  box(M.ceiling, PW - 1.2, 0.1, PD - 1.2, 0, 0.5 + PH - 0.15, 0, podium)
+  for (let x = -12; x <= 12; x += 4) for (const z of [-4, 2, 7]) box(M.light, 2.6, 0.06, 0.4, x, 0.5 + PH - 0.22, z, podium)
   // Lobby glass front and interior
   const lobbyGlass = box(M.glass, 18, PH - 1.2, 0.2, -3, 0.5 + (PH - 1.2) / 2 + 0.2, PD / 2 + 0.11, podium)
   lobbyGlass.renderOrder = 2
@@ -354,7 +364,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     return { pos: new THREE.Vector3(27, Math.max(7, y + lift), 47), look: new THREE.Vector3(-2, y + (i === 0 ? 3 : 0), 0) }
   }
   function insideShot(i) {
-    if (i === 0) return { pos: new THREE.Vector3(-3, 3.2, PD / 2 + 9), look: new THREE.Vector3(-3, 3.6, PD / 2 - 11) }
+    if (i === 0) return { pos: new THREE.Vector3(1.5, 3.4, PD / 2 + 1.5), look: new THREE.Vector3(1.5, 3.4, -PD / 2) }
     if (i === 10) return { pos: new THREE.Vector3(10, towerTop + 4, 20), look: new THREE.Vector3(0, towerTop + 7.5, 0) }
     const y = levelBase(i) + 0.5
     return { pos: new THREE.Vector3(-TW / 2 + 0.9, y + 2.2, TD / 2 - 0.8), look: new THREE.Vector3(TW / 2 - 2, y + 1.3, -TD / 2 + 1.5) }
