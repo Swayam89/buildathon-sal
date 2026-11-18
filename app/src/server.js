@@ -4,10 +4,12 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { join, extname, normalize } from 'node:path'
 import { makeCompany, APP_DIR } from './runtime.js'
+import { CEO } from './ceo.js'
 
 const PORT = Number(process.env.PORT || 4700)
 const PUBLIC = join(APP_DIR, 'public')
 const co = makeCompany()
+const ceo = new CEO({ co, brain: co.brain })
 // On stage, the offline brain answers instantly; a short pause lets the audience see a floor glow and a robot nod.
 if (co.brain.name === 'scripted') {
   const pause = Number(process.env.DEMO_THINK_MS ?? 1800), think = co.brain.think.bind(co.brain)
@@ -17,6 +19,9 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 
 
 let busy = null            // what the company is doing right now (one step at a time)
 let autopilot = null       // timer while autopilot is on
+
+// The CEO chat waits for a running step to finish instead of failing.
+async function whenFree(ms = 120000) { const t0 = Date.now(); while (busy && Date.now() - t0 < ms) await new Promise(r => setTimeout(r, 300)) }
 
 async function work(label, fn) {
   if (busy) return { ok: false, reason: `busy: ${busy}` }
@@ -54,6 +59,8 @@ const routes = {
     return { ok: true, venture: v, plan }
   }),
   'POST /api/step': (q, b) => work('running a step', () => co.step({ venture: b.venture, task: b.task })),
+  'POST /api/ceo': async (q, b) => { co.store.reload(); await whenFree(); return work('the CEO is working', async () => { try { return { ok: true, ...(await ceo.chat(b.message)) } } catch (e) { return { ok: false, reason: e.message } } }) },
+  'GET /api/ceo': () => ({ live: ceo.live, brain: co.brain.name, messages: co.store.data.events.filter(e => e.type === 'ceo').slice(-30).map(e => ({ at: e.at, text: e.text })) }),
   'POST /api/assign': (q, b) => co.addTask({ venture: b.venture, title: b.title, detail: b.detail || '', assignee: b.assignee, priority: b.priority || 'normal', by: 'owner' }),
   'POST /api/decide': (q, b) => co.decide(b.id, { approve: !!b.approve, note: b.note || '', by: 'owner' }),
   'POST /api/task': (q, b) => co.setTask(b.id, b),
