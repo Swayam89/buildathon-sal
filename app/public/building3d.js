@@ -56,6 +56,18 @@ function glowTex() {
   }))
 }
 
+// What's on the monitors: code, a chart, a dashboard, a document.
+function screenTex(kind, seed) {
+  const r = rng(seed)
+  return canvasTex(128, 80, (g, w, h) => {
+    g.fillStyle = kind === 'doc' ? '#f3f5f8' : '#0e1622'; g.fillRect(0, 0, w, h)
+    if (kind === 'code') for (let y = 6; y < h - 4; y += 6) { let x = 6 + (r() * 3 | 0) * 6; while (x < w - 10 && r() > 0.15) { const l = 6 + r() * 22; g.fillStyle = ['#7fd4ff', '#ffcf6b', '#9ff3b0', '#c9d1e0', '#ff9a8a'][r() * 5 | 0]; g.fillRect(x, y, l, 3); x += l + 4 } }
+    if (kind === 'chart') { g.strokeStyle = '#2b3a50'; for (let y = 10; y < h; y += 14) { g.beginPath(); g.moveTo(6, y); g.lineTo(w - 6, y); g.stroke() } g.strokeStyle = '#5ee09a'; g.lineWidth = 2.5; g.beginPath(); let y = h - 18; g.moveTo(6, y); for (let x = 6; x < w - 6; x += 10) { y = Math.max(10, Math.min(h - 8, y - 6 + r() * 9)); g.lineTo(x, y) } g.stroke() }
+    if (kind === 'dash') { for (let k = 0; k < 6; k++) { const bh = 10 + r() * 50; g.fillStyle = k % 2 ? '#ffb52e' : '#6fd6ff'; g.fillRect(10 + k * 18, h - 8 - bh, 12, bh) } g.fillStyle = '#c9d1e0'; g.fillRect(8, 6, 60, 5) }
+    if (kind === 'doc') { g.fillStyle = '#1d2533'; g.fillRect(10, 8, 70, 6); g.fillStyle = '#8b94a3'; for (let y = 22; y < h - 6; y += 7) g.fillRect(10, y, 30 + r() * 80, 3) }
+  })
+}
+
 // City windows: big panes, mostly warm white, some cool.
 function cityWindows(seed, cols, rows) {
   const r = rng(seed)
@@ -72,7 +84,8 @@ function cityWindows(seed, cols, rows) {
 
 export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' })
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75))
+  let pixelRatio = Math.min(devicePixelRatio, 1.75)
+  renderer.setPixelRatio(pixelRatio)
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.3
   renderer.shadowMap.enabled = false
@@ -105,19 +118,21 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     stone: new THREE.MeshStandardMaterial({ color: C.stone, roughness: 0.62, metalness: 0.02 }),
     stoneDark: new THREE.MeshStandardMaterial({ color: C.stoneDark, roughness: 0.9 }),
     slab: new THREE.MeshStandardMaterial({ color: C.slab, roughness: 0.7 }),
-    glass: new THREE.MeshPhysicalMaterial({ color: '#9ec3da', metalness: 0.1, roughness: 0.02, transparent: true, opacity: 0.16, envMapIntensity: 2.4, clearcoat: 1, depthWrite: false }),
+    glass: new THREE.MeshStandardMaterial({ color: '#9ec3da', metalness: 0.3, roughness: 0.03, transparent: true, opacity: 0.16, envMapIntensity: 2.6, depthWrite: false }),
     mullion: new THREE.MeshStandardMaterial({ color: '#2a2f36', roughness: 0.32, metalness: 0.75 }),
     cyan: new THREE.MeshBasicMaterial({ color: C.cyan }),
     warm: new THREE.MeshBasicMaterial({ color: C.warm }),
     amber: new THREE.MeshBasicMaterial({ color: C.amber }),
-    floorIn: new THREE.MeshStandardMaterial({ color: '#a9aeb5', emissive: '#2c3a46', emissiveIntensity: 0.15, roughness: 0.6, metalness: 0.05 }),
-    ceiling: new THREE.MeshStandardMaterial({ color: '#b9bec5', emissive: '#8a9aa8', emissiveIntensity: 0.12, roughness: 0.9 }),
+    floorIn: new THREE.MeshStandardMaterial({ roughness: 0.95, map: (() => { const t = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#5b636e'; g.fillRect(0, 0, w, h); const r = rng(4); for (let k = 0; k < 2500; k++) { g.fillStyle = `rgba(${r() < 0.5 ? '255,255,255' : '0,0,0'},${r() * 0.06})`; g.fillRect(r() * w, r() * h, 2, 2) } g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 2; for (let k = 0; k <= 4; k++) { g.beginPath(); g.moveTo(k * 64, 0); g.lineTo(k * 64, h); g.moveTo(0, k * 64); g.lineTo(w, k * 64); g.stroke() } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 3); return t })() }),
+    ceiling: new THREE.MeshStandardMaterial({ roughness: 0.9, emissive: '#8a9aa8', emissiveIntensity: 0.1, map: (() => { const t = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#c4c8ce'; g.fillRect(0, 0, w, h); g.strokeStyle = '#9aa0a8'; g.lineWidth = 3; for (let k = 0; k <= 4; k++) { g.beginPath(); g.moveTo(k * 64, 0); g.lineTo(k * 64, h); g.moveTo(0, k * 64); g.lineTo(w, k * 64); g.stroke() } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(5, 4); return t })() }),
     light: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
     desk: new THREE.MeshStandardMaterial({ color: '#d9dde2', roughness: 0.45 }),
     deskDark: new THREE.MeshStandardMaterial({ color: '#3a3f46', roughness: 0.7 }),
     chair: new THREE.MeshStandardMaterial({ color: '#2b2f35', roughness: 0.8 }),
-    screen: new THREE.MeshBasicMaterial({ color: '#dff4ff' }),
-    screenWarm: new THREE.MeshBasicMaterial({ color: '#fff0d0' }),
+    screen: new THREE.MeshBasicMaterial({ map: screenTex('code', 3) }),
+    screenWarm: new THREE.MeshBasicMaterial({ map: screenTex('chart', 5) }),
+    screenDash: new THREE.MeshBasicMaterial({ map: screenTex('dash', 7) }),
+    screenDoc: new THREE.MeshBasicMaterial({ map: screenTex('doc', 9) }),
     body: new THREE.MeshStandardMaterial({ color: '#3f8aa0', roughness: 0.7 }),
     head: new THREE.MeshBasicMaterial({ color: '#e6f7ff' }),
     headBusy: new THREE.MeshBasicMaterial({ color: '#ffd28a' }),
@@ -222,6 +237,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     // slab and ceiling
     box(M.slab, TW + 0.8, 0.35, TD + 0.8, 0, 0, 0, g)
     box(M.floorIn, TW - 0.4, 0.05, TD - 0.4, 0, 0.2, 0, g)
+    cyl(M.stone, 0.32, FH, -1.6, FH / 2, 1.6, g)
     box(M.ceiling, TW - 0.4, 0.1, TD - 0.4, 0, FH - 0.15, 0, g)
     for (let x = -6; x <= 6; x += 3) box(M.light, 2.2, 0.06, 0.35, x, FH - 0.22, 0, g), box(M.light, 2.2, 0.06, 0.35, x, FH - 0.22, -3.5, g), box(M.light, 2.2, 0.06, 0.35, x, FH - 0.22, 3.5, g)
     // cyan neon edge along the slab
@@ -239,7 +255,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
       const x = -6.5 + k * 3, z = -2 + row * 3.2
       box(M.desk, 2.2, 0.08, 1, x, 1.0, z, g)
       box(M.deskDark, 0.08, 1, 0.9, x - 1.05, 0.5, z, g); box(M.deskDark, 0.08, 1, 0.9, x + 1.05, 0.5, z, g)
-      box(k % 2 ? M.screenWarm : M.screen, 0.7, 0.45, 0.04, x - 0.4, 1.35, z - 0.3, g); box(M.screen, 0.7, 0.45, 0.04, x + 0.4, 1.35, z - 0.3, g)
+      box([M.screen, M.screenWarm, M.screenDash, M.screenDoc][(k + row + i) % 4], 0.7, 0.45, 0.04, x - 0.4, 1.35, z - 0.3, g); box([M.screenDash, M.screen, M.screenDoc, M.screenWarm][(k + i) % 4], 0.7, 0.45, 0.04, x + 0.4, 1.35, z - 0.3, g)
       if (!(row === 0 && k < 3)) { box(M.chair, 0.6, 0.1, 0.6, x, 0.6, z + 0.9, g); box(M.chair, 0.6, 0.8, 0.08, x, 1.0, z + 1.2, g) }
     }
     // glass meeting room around the table, and plants by the windows
@@ -373,7 +389,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   box(walnut, 9, 1.1, 1.3, -2, 0.67, -2, lobby)
   box(new THREE.MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.2 }), 9.4, 0.1, 1.6, -2, 1.27, -2, lobby)
   box(M.cyan, 9, 0.05, 0.05, -2, 0.18, -1.33, lobby)
-  for (const dx of [-3, 0, 3]) box(M.screen, 0.6, 0.38, 0.03, -2 + dx, 1.55, -2.4, lobby)
+  for (const dx of [-3, 0, 3]) box(dx ? M.screenDash : M.screenDoc, 0.6, 0.38, 0.03, -2 + dx, 1.55, -2.4, lobby)
   // Screens on the side walls
   box(M.dark, 4.2, 2.6, 0.12, 10.5, 3, -5.9, lobby)
   for (let b = 0; b < 9; b++) { const h = 0.4 + ((b * 37) % 11) / 6; box(new THREE.MeshBasicMaterial({ color: b % 3 ? '#9ff3d6' : '#ffd28a' }), 0.26, h, 0.05, 9.0 + b * 0.38, 1.9 + h / 2, -5.82, lobby) }
@@ -452,10 +468,14 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     pool.rotation.x = -Math.PI / 2; pool.position.set(k * 14 + 1.2, 0.09, z + (z > 0 ? 3 : -3)); scene.add(pool)
   }
   const cars = []
+  const tint = new THREE.MeshStandardMaterial({ color: '#0d1117', roughness: 0.1, metalness: 0.6 })
+  const tyre = new THREE.MeshStandardMaterial({ color: '#141518', roughness: 0.9 })
   const carMat = [new THREE.MeshStandardMaterial({ color: '#b9bec6', roughness: 0.5 }), new THREE.MeshStandardMaterial({ color: '#3d4450', roughness: 0.5 }), new THREE.MeshStandardMaterial({ color: '#7d8590', roughness: 0.5 })]
   for (let k = 0; k < 8; k++) {
     const car = new THREE.Group(); car.userData.keep = true
-    box(carMat[k % 3], 4.2, 1.1, 1.9, 0, 0.9, 0, car); box(carMat[k % 3], 2.4, 0.8, 1.7, -0.3, 1.8, 0, car)
+    box(carMat[k % 3], 4.2, 0.9, 1.9, 0, 0.85, 0, car); box(carMat[k % 3], 2.3, 0.75, 1.7, -0.3, 1.65, 0, car)
+    box(tint, 2.36, 0.5, 1.74, -0.3, 1.68, 0, car)
+    for (const wx of [-1.35, 1.35]) for (const wz of [-0.92, 0.92]) { const wh = new THREE.Mesh(G.cyl, tyre); wh.scale.set(0.72, 0.28, 0.72); wh.rotation.x = Math.PI / 2; wh.position.set(wx, 0.4, wz); car.add(wh) }
     box(M.lamp, 0.1, 0.25, 0.4, 2.12, 0.95, 0.6, car); box(M.lamp, 0.1, 0.25, 0.4, 2.12, 0.95, -0.6, car)
     box(new THREE.MeshBasicMaterial({ color: '#ff4b3a' }), 0.1, 0.2, 0.4, -2.12, 0.95, 0.6, car); box(new THREE.MeshBasicMaterial({ color: '#ff4b3a' }), 0.1, 0.2, 0.4, -2.12, 0.95, -0.6, car)
     const lane = k % 4, alongX = lane < 2
@@ -467,6 +487,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   // ---------- City ----------
   const cr = rng(7)
   const texCache = [0, 1, 2, 3, 4, 5].map(s => cityWindows(100 + s * 31, 6, 14))
+  const cityRoof = new THREE.MeshStandardMaterial({ color: '#2b2e35', roughness: 0.8 })
   for (let gx = -6; gx <= 6; gx++) for (let gz = -6; gz <= 6; gz++) {
     const x = gx * 30 + (cr() - 0.5) * 6, z = gz * 30 + (cr() - 0.5) * 6
     if (Math.abs(x) < 52 && Math.abs(z) < 48) continue          // keep the block around the tower clear
@@ -477,6 +498,9 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
     const side = new THREE.MeshStandardMaterial({ color: '#202329', emissive: '#ffffff', emissiveMap: t, emissiveIntensity: 1.15, roughness: 0.8 })
     const b = new THREE.Mesh(G.box, [side, side, new THREE.MeshStandardMaterial({ color: '#25282e' }), side, side, side])
     b.scale.set(w, h, d); b.position.set(x, h / 2, z); scene.add(b)
+    box(cityRoof, w + 0.4, 0.8, d + 0.4, x, h + 0.4, z)
+    if (cr() < 0.45) { cyl(cityRoof, 1.2, 2.2, x + w * 0.2, h + 1.9, z - d * 0.2); cyl(cityRoof, 0.08, 1.2, x + w * 0.2 + 0.9, h + 0.9, z - d * 0.2 + 0.9) }
+    if (h > 55) { const rl = new THREE.Mesh(G.sphere, new THREE.MeshBasicMaterial({ color: '#ff2a1a' })); rl.scale.setScalar(0.6); rl.position.set(x, h + 1.4, z); rl.userData.keep = true; scene.add(rl); blink.push(rl) }
   }
 
   // ---------- Merge everything static into one mesh per material (thousands of draw calls -> a few hundred) ----------
@@ -558,7 +582,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
   const roomLight = new THREE.PointLight('#ffe2b8', 0, 20, 1.5); scene.add(roomLight)
   function enter(id) {
     const i = LEVELS.indexOf(id); if (i < 0) return
-    if (i >= 1 && i <= 9) { roomLight.position.set(-2, levelBase(i) + 0.5 + FH - 0.6, 1); roomLight.intensity = 8 } else roomLight.intensity = 0
+    if (i >= 1 && i <= 9) { roomLight.position.set(2.5, levelBase(i) + 0.5 + FH - 0.7, -1.5); roomLight.intensity = 6 } else roomLight.intensity = 0
     focus = i; inside = id; placeFrame(i)
     frame.visible = frameFill.visible = false
     apply(insideShot(i))
@@ -618,6 +642,7 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
 
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new THREE.Clock()
+  const perf = { frames: 0, time: 0, since: performance.now() + 3000 }
   const tmp = new THREE.Vector3()
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime
@@ -654,6 +679,13 @@ export function createBuilding(canvas, { onFocus = () => {}, onEnter = () => {} 
       }
     }
     for (const m of mixers) m.update(dt)
+    // Keep it smooth: if the frame rate sags, render at a slightly lower resolution.
+    perf.frames++
+    if (performance.now() - perf.since > 2000) {
+      const fps = perf.frames / ((performance.now() - perf.since) / 1000)
+      if (fps < 50 && pixelRatio > 0.85) { pixelRatio = Math.max(0.85, pixelRatio - 0.25); renderer.setPixelRatio(pixelRatio); composer.setPixelRatio?.(pixelRatio); resize() }
+      perf.frames = 0; perf.since = performance.now()
+    }
     composer.render()
   })
 
