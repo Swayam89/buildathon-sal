@@ -83,3 +83,15 @@ test('the daily step cap holds', async () => {
   assert.equal((await co.step()).ok, true)
   assert.match((await co.step()).reason, /daily cap/)
 })
+
+test('a step still lands when the records are reloaded while the brain is thinking (dashboard polling)', async () => {
+  const { mkdtempSync } = await import('node:fs'); const { tmpdir } = await import('node:os'); const { join } = await import('node:path')
+  const store = new Store(join(mkdtempSync(join(tmpdir(), 'corp-reload-')), 'c.json'))
+  const co = new Company({ store, fetchImpl, brain: new ScriptedBrain(async () => { store.reload(); return step({ summary: 'Wrote it.' }) }) })
+  const v = co.startVenture({ idea: 'Tea box' })
+  co.addTask({ venture: v.id, title: 'Tagline ideas', assignee: 'content' })
+  assert.equal((await co.step()).ok, true)
+  store.reload()
+  assert.equal(store.tasks()[0].status, 'done')
+  assert.equal(store.tasks()[0].output.summary, 'Wrote it.')
+})

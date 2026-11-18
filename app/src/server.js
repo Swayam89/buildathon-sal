@@ -8,6 +8,11 @@ import { makeCompany, APP_DIR } from './runtime.js'
 const PORT = Number(process.env.PORT || 4700)
 const PUBLIC = join(APP_DIR, 'public')
 const co = makeCompany()
+// On stage, the offline brain answers instantly; a short pause lets the audience see a floor glow and a robot nod.
+if (co.brain.name === 'scripted') {
+  const pause = Number(process.env.DEMO_THINK_MS ?? 1800), think = co.brain.think.bind(co.brain)
+  co.brain.think = async (call) => { await new Promise(r => setTimeout(r, pause)); return think(call) }
+}
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' }
 
 let busy = null            // what the company is doing right now (one step at a time)
@@ -20,13 +25,14 @@ async function work(label, fn) {
 }
 
 async function autoStep() {
+  if (busy) return
   co.store.reload()
   if (busy || !co.runnable().length) return
   await work('autopilot step', () => co.step())
 }
 
 function state() {
-  co.store.reload()
+  if (!busy) co.store.reload()   // never swap the records under a step that's running
   const d = co.store.data
   return {
     busy, autopilot: !!autopilot, brain: co.brain.name,

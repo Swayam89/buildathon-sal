@@ -90,7 +90,7 @@ export class Company {
   // One staff member does one task. Returns what happened.
   async step({ venture = null, task = null } = {}) {
     if (this.stepsToday() >= this.stepsPerDay) return { ok: false, reason: `the daily cap of ${this.stepsPerDay} steps is reached` }
-    const t = task ? this.byId(task) : this.runnable(venture)[0]
+    let t = task ? this.byId(task) : this.runnable(venture)[0]
     if (!t) return { ok: false, reason: 'nothing is ready to work on' }
     if (t.status !== 'todo') return { ok: false, reason: `${t.id} is ${t.status}` }
     const blocked = t.deps.filter(d => this.byId(d)?.status !== 'done')
@@ -103,15 +103,19 @@ export class Company {
     this.store.save()
 
     let out
+    const id = t.id
     try {
       out = await this.brain.think({ system: this.staffSystem(who), prompt: this.staffPrompt(t, v), schema: STEP })
       if (!conforms(out, STEP)) throw new Error('answer did not match the schema')
     } catch (e) {
+      t = this.byId(id) || t   // the records may have been reloaded while the brain was thinking
       t.status = t.attempts >= 2 ? 'failed' : 'todo'
       this.store.log('error', `${who.name} could not finish ${t.id}: ${e.message}${t.status === 'todo' ? ' (will retry)' : ''}`, { venture: v.id, task: t.id })
       this.store.save()
       return { ok: false, task: t.id, reason: e.message }
     }
+    t = this.byId(id) || t     // apply to the current copy of the task, not a stale one
+    t.status = 'doing'
     const result = await this.apply(t, who, out)
     this.store.save()
     return { ok: true, task: t.id, who: who.name, ...result }
