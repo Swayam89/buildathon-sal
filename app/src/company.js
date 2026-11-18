@@ -46,7 +46,7 @@ export class Company {
     return { ok: true, task: t }
   }
 
-  nameOf(id) { return id === CEO.id ? CEO.name : (person(id)?.name || id) }
+  nameOf(id) { return id === CEO.id ? CEO.name : id === 'owner' ? 'You' : (person(id)?.name || id) }
 
   // The chief of staff drafts a plan when the CEO hasn't set tasks.
   async plan(ventureId) {

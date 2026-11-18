@@ -48,6 +48,7 @@ const routes = {
     return { ok: true, venture: v, plan }
   }),
   'POST /api/step': (q, b) => work('running a step', () => co.step({ venture: b.venture, task: b.task })),
+  'POST /api/assign': (q, b) => co.addTask({ venture: b.venture, title: b.title, detail: b.detail || '', assignee: b.assignee, priority: b.priority || 'normal', by: 'owner' }),
   'POST /api/decide': (q, b) => co.decide(b.id, { approve: !!b.approve, note: b.note || '', by: 'owner' }),
   'POST /api/task': (q, b) => co.setTask(b.id, b),
   'POST /api/autopilot': (q, b) => {
@@ -69,7 +70,7 @@ const server = createServer(async (req, res) => {
       return send(out?.ok === false ? 400 : 200, out)
     }
     if (req.method !== 'GET') return send(404, { ok: false, reason: 'not found' })
-    const file = normalize(join(PUBLIC, url.pathname === '/' ? 'index.html' : url.pathname))
+    const file = normalize(join(PUBLIC, url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname))
     if (!file.startsWith(PUBLIC)) return send(403, { ok: false })
     return send(200, await readFile(file), TYPES[extname(file)] || 'application/octet-stream')
   } catch (e) {
